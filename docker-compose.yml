@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  bvc-crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bvc-crawler
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - CACHE_TTL_SECONDS=300
+      - BVC_REST_API_URL=https://rest.bvc.com.co
+      - BVC_WEB_URL=https://www.bvc.com.co
+      - ENABLE_PLAYWRIGHT=true
+      - PLAYWRIGHT_HEADLESS=true
+      - PLAYWRIGHT_TIMEOUT_MS=30000
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
