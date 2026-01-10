@@ -11,21 +11,11 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "echo \"No tests yet\""
   },
-  "keywords": [
-    "bvc",
-    "mercado-global-colombiano",
-    "crawler",
-    "api",
-    "rest"
-  ],
-  "author": "",
   "license": "MIT",
   "dependencies": {
-    "fastify": "^4.28.1",
-    "jsonwebtoken": "^9.0.3"
+    "fastify": "^4.28.1"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.19.1",
     "@typescript-eslint/parser": "^8.19.1",

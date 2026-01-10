@@ -1,7 +1,5 @@
 import { FastifyPluginAsync, FastifyReply } from "fastify";
-import { bvcClient } from "../services/bvc-client.js";
-import { InMemoryCache } from "../utils/cache.js";
-import { config } from "../config/index.js";
+import { triiClient } from "../services/trii-client.js";
 import { TickerData, ApiResponse } from "../types/index.js";
 
 interface TickerParams {
@@ -34,14 +32,6 @@ function normalizeTicker(raw: string): string | null {
 }
 
 export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
-  const tickerCache = new InMemoryCache<TickerData>(
-    config.cache.ttlSeconds * 1000,
-  );
-
-  fastify.addHook("onClose", async () => {
-    tickerCache.clear();
-  });
-
   fastify.get<{ Params: TickerParams }>(
     "/ticker/:ticker",
     async (request, reply) => {
@@ -54,57 +44,31 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const cachedData = await tickerCache.getOrFetch(
-          normalizedTicker,
-          async () => {
-            const requestIp = request.ip || null;
-
-            const tickerData = await bvcClient.getTickerData(normalizedTicker, {
-              requestIp,
-            });
-            if (tickerData === null) {
-              throw new Error("TICKER_NOT_FOUND");
-            }
-            return tickerData;
-          },
-        );
-
-        const response: ApiResponse<TickerData> = {
-          success: true,
-          data: cachedData,
-        };
-
-        return reply.code(200).send(response);
-      } catch (error) {
-        if (error instanceof Error && error.message === "TICKER_NOT_FOUND") {
+        const price = await triiClient.getPriceByTicker(normalizedTicker);
+        if (price === null) {
           await sendError(
             reply,
             404,
             "TICKER_NOT_FOUND",
-            `Ticker "${normalizedTicker}" not found in the Colombian Global Market`,
+            `Ticker "${normalizedTicker}" not found`,
           );
           return;
         }
 
-        if (
-          error instanceof Error &&
-          error.message.startsWith("TRII_PRICE_NOT_FOUND")
-        ) {
-          fastify.log.error(
-            { err: error, ticker: normalizedTicker },
-            "[API] Price unavailable via Trii fallback",
-          );
-          await sendError(
-            reply,
-            502,
-            "PRICE_UNAVAILABLE",
-            `Price unavailable for ticker "${normalizedTicker}"`,
-          );
-          return;
-        }
+        const response: ApiResponse<TickerData> = {
+          success: true,
+          data: { price },
+        };
 
+        return reply.code(200).send(response);
+      } catch (error) {
         fastify.log.error({ err: error }, "[API] Error fetching ticker");
-        await sendError(reply, 502, "BVC_API_ERROR", "Error querying BVC API");
+        await sendError(
+          reply,
+          502,
+          "FETCH_ERROR",
+          "Error fetching ticker price",
+        );
       }
     },
   );

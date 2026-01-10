@@ -7,11 +7,4 @@ export const config = {
     isDisabled: process.env.AUTH_DISABLED === "true",
     apiKey: process.env.API_KEY,
   },
-  cache: {
-    ttlSeconds: parseInt(process.env.CACHE_TTL_SECONDS || "300", 10),
-  },
-  bvc: {
-    restApiUrl: "https://rest.bvc.com.co",
-    webUrl: "https://www.bvc.com.co",
-  },
 } as const;
