@@ -7,7 +7,10 @@ export const config = {
     ttlSeconds: parseInt(process.env.CACHE_TTL_SECONDS || "300", 10),
   },
   bvc: {
-    restApiUrl: process.env.BVC_REST_API_URL || "https://rest.bvc.com.co",
-    webUrl: process.env.BVC_WEB_URL || "https://www.bvc.com.co",
+    restApiUrl: "https://rest.bvc.com.co",
+    webUrl: "https://www.bvc.com.co",
+  },
+  security: {
+    apiKey: process.env.API_KEY,
   },
 } as const;

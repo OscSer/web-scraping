@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { TokenInfo } from "../types/index.js";
+import { logger } from "../utils/logger.js";
 
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000;
 const BVC_CREDENTIALS = {
@@ -64,10 +65,10 @@ export class TokenManager {
 
       const data = (await response.json()) as { client_ip: string };
       this.cachedIp = data.client_ip;
-      console.log(`[TokenManager] Obtained public IP: ${this.cachedIp}`);
+      logger.info(`[TokenManager] Obtained public IP: ${this.cachedIp}`);
       return this.cachedIp;
     } catch (error) {
-      console.error("[TokenManager] Error fetching public IP:", error);
+      logger.error({ err: error }, "[TokenManager] Error fetching public IP");
       throw new Error(
         `Could not obtain public IP: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -76,7 +77,7 @@ export class TokenManager {
 
   private async performRefresh(): Promise<string> {
     try {
-      console.log("[TokenManager] Generating new JWT token...");
+      logger.info("[TokenManager] Generating new JWT token...");
 
       const ip = await this.fetchPublicIp();
       const timestamp = Date.now();
@@ -100,10 +101,10 @@ export class TokenManager {
         expiresAt: Date.now() + TOKEN_EXPIRATION_MS,
       };
 
-      console.log("[TokenManager] Token generated successfully");
+      logger.info("[TokenManager] Token generated successfully");
       return token;
     } catch (error) {
-      console.error("[TokenManager] Error generating token:", error);
+      logger.error({ err: error }, "[TokenManager] Error generating token");
       throw new Error(
         `Could not generate token: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -111,7 +112,7 @@ export class TokenManager {
   }
 
   async invalidateToken(): Promise<void> {
-    console.log("[TokenManager] Invalidating token...");
+    logger.info("[TokenManager] Invalidating token...");
     this.tokenInfo = null;
   }
 

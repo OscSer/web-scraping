@@ -42,16 +42,6 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
     tickerCache.clear();
   });
 
-  fastify.get("/health", async (_request, reply) => {
-    return reply.code(200).send({
-      success: true,
-      data: {
-        status: "ok",
-        timestamp: new Date().toISOString(),
-      },
-    });
-  });
-
   fastify.get<{ Params: TickerParams }>(
     "/ticker/:ticker",
     async (request, reply) => {

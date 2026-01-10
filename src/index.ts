@@ -2,12 +2,14 @@ import Fastify from "fastify";
 import { config } from "./config/index.js";
 import { tickerRoutes } from "./routes/ticker.js";
 import { tokenManager } from "./services/token-manager.js";
+import { logger } from "./utils/logger.js";
+import { apiKeyAuth } from "./middleware/auth.js";
 
 const fastify = Fastify({
-  logger: {
-    level: process.env.LOG_LEVEL || "info",
-  },
+  logger,
 });
+
+fastify.addHook("onRequest", apiKeyAuth);
 
 fastify.register(tickerRoutes);
 
@@ -17,7 +19,6 @@ function logStartupBanner() {
     `Server running at: http://${config.server.host}:${config.server.port}`,
   );
   fastify.log.info("Endpoints:");
-  fastify.log.info("  GET /health");
   fastify.log.info("  GET /ticker/:ticker");
   fastify.log.info(`Cache TTL: ${config.cache.ttlSeconds}s`);
   fastify.log.info("Token source: HTTP (auto-fetch from BVC bundle)");

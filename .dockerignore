@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+docs
+
+# IDE
+.vscode
+.idea
+
+# Testing
+coverage
+.nyc_output
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Cloud
+.gcloudignore
+cloudbuild.yaml

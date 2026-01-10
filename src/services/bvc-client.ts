@@ -2,6 +2,7 @@ import { config } from "../config/index.js";
 import { BvcLvl2Response, TickerData } from "../types/index.js";
 import { getCurrentTradeDate, sleep } from "../utils/helpers.js";
 import { tokenManager } from "./token-manager.js";
+import { logger } from "../utils/logger.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
@@ -50,7 +51,7 @@ export class BvcClient {
         });
 
         if (response.status === 401) {
-          console.log("[BvcClient] Invalid or expired token, renewing...");
+          logger.info("[BvcClient] Invalid or expired token, renewing...");
           await tokenManager.invalidateToken();
 
           token = await tokenManager.getToken();
@@ -64,7 +65,7 @@ export class BvcClient {
               isRetriableStatus(retryResponse.status) &&
               attempt < MAX_RETRIES - 1
             ) {
-              console.log(
+              logger.info(
                 `[BvcClient] Error ${retryResponse.status}, retrying (${attempt + 1}/${MAX_RETRIES})...`,
               );
               await sleep(RETRY_DELAY_MS * (attempt + 1));
@@ -87,7 +88,7 @@ export class BvcClient {
         }
 
         if (isRetriableStatus(response.status) && attempt < MAX_RETRIES - 1) {
-          console.log(
+          logger.info(
             `[BvcClient] Error ${response.status}, retrying (${attempt + 1}/${MAX_RETRIES})...`,
           );
           await sleep(RETRY_DELAY_MS * (attempt + 1));
@@ -109,7 +110,7 @@ export class BvcClient {
         }
 
         if (attempt < MAX_RETRIES - 1) {
-          console.log(
+          logger.info(
             `[BvcClient] Network error, retrying (${attempt + 1}/${MAX_RETRIES})...`,
           );
           await sleep(RETRY_DELAY_MS * (attempt + 1));
