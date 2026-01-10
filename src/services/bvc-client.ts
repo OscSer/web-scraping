@@ -40,6 +40,7 @@ export class BvcClient {
   async fetchLvl2Data(options?: {
     board?: string;
     tradeDate?: string;
+    requestIp?: string | null;
   }): Promise<BvcLvl2Response> {
     const board = options?.board ?? "MGC";
     const tradeDate = options?.tradeDate ?? getCurrentTradeDate();
@@ -112,7 +113,7 @@ export class BvcClient {
       if (response.status === 401) {
         logger.info("[BvcClient] Invalid or expired token, renewing...");
         await tokenManager.invalidateToken();
-        token = await tokenManager.getToken();
+        token = await tokenManager.getToken({ requestIp: options?.requestIp });
 
         const retryResponse = await fetch(url, {
           headers: buildHeaders(token),
@@ -154,7 +155,7 @@ export class BvcClient {
       throw lastError;
     };
 
-    let token = await tokenManager.getToken();
+    let token = await tokenManager.getToken({ requestIp: options?.requestIp });
 
     let lastError: Error | null = null;
 
@@ -189,13 +190,19 @@ export class BvcClient {
     throw lastError || new Error("BVC API error: max retries exceeded");
   }
 
-  async getTickerData(mnemonic: string): Promise<TickerData | null> {
+  async getTickerData(
+    mnemonic: string,
+    options?: { requestIp?: string | null },
+  ): Promise<TickerData | null> {
     const normalizedMnemonic = mnemonic.toLowerCase();
 
     const tradeDatesToTry = getTradeDatesToTry({ maxPreviousBusinessDays: 3 });
 
     for (const tradeDate of tradeDatesToTry) {
-      const data = await this.fetchLvl2Data({ tradeDate });
+      const data = await this.fetchLvl2Data({
+        tradeDate,
+        requestIp: options?.requestIp,
+      });
 
       const ticker = data.data.tab.find(
         (item) => item.mnemonic.toLowerCase() === normalizedMnemonic,

@@ -57,7 +57,11 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         const cachedData = await tickerCache.getOrFetch(
           normalizedTicker,
           async () => {
-            const tickerData = await bvcClient.getTickerData(normalizedTicker);
+            const requestIp = request.ip || null;
+
+            const tickerData = await bvcClient.getTickerData(normalizedTicker, {
+              requestIp,
+            });
             if (tickerData === null) {
               throw new Error("TICKER_NOT_FOUND");
             }

@@ -7,6 +7,7 @@ import { logger } from "./utils/logger.js";
 
 const fastify = Fastify({
   logger,
+  trustProxy: true,
 });
 
 function hasValidApiKeyHeader(rawHeaderValue: unknown): boolean {

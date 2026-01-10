@@ -16,7 +16,11 @@ export class TokenManager {
   private refreshPromise: Promise<string> | null = null;
   private cachedIp: string | null = null;
 
-  async getToken(): Promise<string> {
+  async getToken(options?: { requestIp?: string | null }): Promise<string> {
+    if (options?.requestIp) {
+      this.cachedIp = options.requestIp;
+    }
+
     if (this.tokenInfo && this.isTokenValid()) {
       return this.tokenInfo.token;
     }
@@ -49,12 +53,12 @@ export class TokenManager {
   }
 
   private async fetchPublicIp(): Promise<string> {
-    if (!globalThis.fetch) {
-      throw new Error("Global fetch is not available in this runtime");
-    }
-
     if (this.cachedIp) {
       return this.cachedIp;
+    }
+
+    if (!globalThis.fetch) {
+      throw new Error("Global fetch is not available in this runtime");
     }
 
     try {
