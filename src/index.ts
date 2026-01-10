@@ -23,7 +23,7 @@ function hasValidApiKeyHeader(rawHeaderValue: unknown): boolean {
 
 if (!config.auth.isDisabled && !config.auth.apiKey) {
   fastify.log.error(
-    "Missing required env var: API_KEY. Refusing to start (fail-closed)."
+    "Missing required env var: API_KEY. Refusing to start (fail-closed).",
   );
   process.exit(1);
 }

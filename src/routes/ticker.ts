@@ -1,5 +1,6 @@
 import { FastifyPluginAsync, FastifyReply } from "fastify";
 import { triiClient } from "../services/trii-client.js";
+import { tradingViewClient } from "../services/tradingview-client.js";
 import { TickerData, ApiResponse } from "../types/index.js";
 
 interface TickerParams {
@@ -44,7 +45,16 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const price = await triiClient.getPriceByTicker(normalizedTicker);
+        let price = await triiClient.getPriceByTicker(normalizedTicker);
+
+        if (price === null) {
+          fastify.log.info(
+            { ticker: normalizedTicker },
+            "[API] Ticker not found in TRII, trying TradingView",
+          );
+          price = await tradingViewClient.getPriceByTicker(normalizedTicker);
+        }
+
         if (price === null) {
           await sendError(
             reply,
@@ -63,6 +73,30 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(200).send(response);
       } catch (error) {
         fastify.log.error({ err: error }, "[API] Error fetching ticker");
+
+        fastify.log.info(
+          { ticker: normalizedTicker },
+          "[API] TRII failed, trying TradingView as fallback",
+        );
+
+        try {
+          const price =
+            await tradingViewClient.getPriceByTicker(normalizedTicker);
+
+          if (price !== null) {
+            const response: ApiResponse<TickerData> = {
+              success: true,
+              data: { price },
+            };
+            return reply.code(200).send(response);
+          }
+        } catch (fallbackError) {
+          fastify.log.error(
+            { err: fallbackError },
+            "[API] TradingView fallback also failed",
+          );
+        }
+
         await sendError(
           reply,
           502,
