@@ -86,6 +86,23 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
           return;
         }
 
+        if (
+          error instanceof Error &&
+          error.message.startsWith("TRII_PRICE_NOT_FOUND")
+        ) {
+          fastify.log.error(
+            { err: error, ticker: normalizedTicker },
+            "[API] Price unavailable via Trii fallback",
+          );
+          await sendError(
+            reply,
+            502,
+            "PRICE_UNAVAILABLE",
+            `Price unavailable for ticker "${normalizedTicker}"`,
+          );
+          return;
+        }
+
         fastify.log.error({ err: error }, "[API] Error fetching ticker");
         await sendError(reply, 502, "BVC_API_ERROR", "Error querying BVC API");
       }

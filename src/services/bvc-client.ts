@@ -6,8 +6,9 @@ import {
   getTradeDatesToTry,
   sleep,
 } from "../utils/helpers.js";
-import { tokenManager } from "./token-manager.js";
 import { logger } from "../utils/logger.js";
+import { tokenManager } from "./token-manager.js";
+import { triiClient } from "./trii-client.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
@@ -212,10 +213,21 @@ export class BvcClient {
         continue;
       }
 
+      let price = toNumberOrNull(ticker.lastPrice);
+
+      if (price === null) {
+        const triiPrice = await triiClient.getPriceByTicker(normalizedMnemonic);
+        if (triiPrice === null) {
+          throw new Error(`TRII_PRICE_NOT_FOUND: ${normalizedMnemonic}`);
+        }
+
+        price = triiPrice;
+      }
+
       return {
         ticker: ticker.mnemonic,
         issuer: ticker.issuer,
-        price: toNumberOrNull(ticker.lastPrice),
+        price,
         volume: toNumberOrNull(ticker.volume) ?? 0,
         quantity: toNumberOrNull(ticker.quantity),
         board: ticker.board,
