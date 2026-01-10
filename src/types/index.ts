@@ -49,7 +49,7 @@ export interface BvcLvl2Response {
 export interface TokenInfo {
   token: string;
   expiresAt?: number;
-  source: "playwright" | "env";
+  source: "http";
 }
 
 export interface CacheEntry<T> {

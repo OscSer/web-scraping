@@ -20,9 +20,7 @@ function logStartupBanner() {
   fastify.log.info("  GET /health");
   fastify.log.info("  GET /ticker/:ticker");
   fastify.log.info(`Cache TTL: ${config.cache.ttlSeconds}s`);
-  fastify.log.info(
-    `Playwright: ${config.playwright.enabled ? "enabled" : "disabled"} (headless: ${config.playwright.headless})`,
-  );
+  fastify.log.info("Token source: HTTP (auto-fetch from BVC bundle)");
 }
 
 async function start() {

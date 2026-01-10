@@ -1,25 +1,21 @@
-import { chromium, Browser } from "playwright";
-import { config } from "../config/index.js";
+import { randomUUID } from "node:crypto";
+import jwt from "jsonwebtoken";
 import { TokenInfo } from "../types/index.js";
 
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000;
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
+const BVC_CREDENTIALS = {
+  username: "bvclient",
+  password: "Pl4t@formaDig1t@L",
+  secretKey: "d1g1t4l-m4rk3t-2021-gr4b1l1ty-6vc",
+};
+const AUTH_IP_ENDPOINT = "https://api-public.auth.bvc.com.co/public-ip";
 
 export class TokenManager {
   private tokenInfo: TokenInfo | null = null;
-  private browser: Browser | null = null;
   private refreshPromise: Promise<string> | null = null;
+  private cachedIp: string | null = null;
 
   async getToken(): Promise<string> {
-    if (config.bvc.token) {
-      this.tokenInfo = {
-        token: config.bvc.token,
-        source: "env",
-      };
-      return config.bvc.token;
-    }
-
     if (this.tokenInfo && this.isTokenValid()) {
       return this.tokenInfo.token;
     }
@@ -38,12 +34,6 @@ export class TokenManager {
   }
 
   async refreshToken(): Promise<string> {
-    if (!config.playwright.enabled) {
-      throw new Error(
-        "Could not obtain token: Playwright disabled and no BVC_TOKEN configured",
-      );
-    }
-
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
@@ -57,69 +47,65 @@ export class TokenManager {
     }
   }
 
+  private async fetchPublicIp(): Promise<string> {
+    if (!globalThis.fetch) {
+      throw new Error("Global fetch is not available in this runtime");
+    }
+
+    if (this.cachedIp) {
+      return this.cachedIp;
+    }
+
+    try {
+      const response = await fetch(AUTH_IP_ENDPOINT);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch IP: ${response.status}`);
+      }
+
+      const data = (await response.json()) as { client_ip: string };
+      this.cachedIp = data.client_ip;
+      console.log(`[TokenManager] Obtained public IP: ${this.cachedIp}`);
+      return this.cachedIp;
+    } catch (error) {
+      console.error("[TokenManager] Error fetching public IP:", error);
+      throw new Error(
+        `Could not obtain public IP: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
+
   private async performRefresh(): Promise<string> {
     try {
-      console.log("[TokenManager] Fetching token with Playwright...");
+      console.log("[TokenManager] Generating new JWT token...");
 
-      if (!this.browser) {
-        this.browser = await chromium.launch({
-          headless: config.playwright.headless,
-        });
-      }
+      const ip = await this.fetchPublicIp();
+      const timestamp = Date.now();
 
-      const context = await this.browser.newContext({
-        userAgent: USER_AGENT,
+      const payload = {
+        id: randomUUID(),
+        username: BVC_CREDENTIALS.username,
+        password: BVC_CREDENTIALS.password,
+        ip,
+        timestamp,
+      };
+
+      const token = jwt.sign(payload, BVC_CREDENTIALS.secretKey, {
+        algorithm: "HS256",
+        noTimestamp: true,
       });
-
-      const page = await context.newPage();
-
-      let capturedToken: string | null = null;
-
-      const apiHost = new URL(config.bvc.restApiUrl).host;
-
-      page.on("request", (request) => {
-        const url = request.url();
-        try {
-          const requestHost = new URL(url).host;
-          if (requestHost === apiHost && url.includes("/market-information")) {
-            const headers = request.headers();
-            if (headers.token) {
-              capturedToken = headers.token;
-              console.log("[TokenManager] Token captured from request headers");
-            }
-          }
-        } catch {
-          return;
-        }
-      });
-
-      const targetUrl = `${config.bvc.webUrl}/mercado-local-en-linea?tab=renta-variable_mercado-global-colombiano`;
-
-      await page.goto(targetUrl, {
-        waitUntil: "networkidle",
-        timeout: config.playwright.timeoutMs,
-      });
-
-      await page.waitForTimeout(2000);
-
-      if (!capturedToken) {
-        throw new Error("Could not capture token from requests");
-      }
 
       this.tokenInfo = {
-        token: capturedToken,
-        source: "playwright",
+        token,
+        source: "http",
         expiresAt: Date.now() + TOKEN_EXPIRATION_MS,
       };
 
-      await context.close();
-
-      console.log("[TokenManager] Token obtained successfully");
-      return capturedToken;
+      console.log("[TokenManager] Token generated successfully");
+      return token;
     } catch (error) {
-      console.error("[TokenManager] Error fetching token:", error);
+      console.error("[TokenManager] Error generating token:", error);
       throw new Error(
-        `Could not obtain token: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Could not generate token: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -130,10 +116,7 @@ export class TokenManager {
   }
 
   async cleanup(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-    }
+    // No resources to cleanup
   }
 }
 

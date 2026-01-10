@@ -23,7 +23,8 @@ export class BvcClient {
 
     const queryString = params.toString();
     const url = `${config.bvc.restApiUrl}/market-information/rv/lvl-2?${queryString}`;
-    const kHeader = Buffer.from(queryString).toString("base64");
+    const kSource = queryString.length > 0 ? queryString : "undefined";
+    const kHeader = Buffer.from(kSource).toString("base64");
 
     const baseHeaders = {
       accept: "application/json, text/plain, */*",
