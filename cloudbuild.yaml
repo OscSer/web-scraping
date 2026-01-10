@@ -32,8 +32,6 @@ steps:
       - "--allow-unauthenticated"
       - "--set-env-vars"
       - "CACHE_TTL_SECONDS=300"
-      - "--set-secrets"
-      - "API_KEY=${_API_KEY_SECRET}:latest"
       - "--min-instances"
       - "0"
       - "--max-instances"
@@ -54,7 +52,6 @@ substitutions:
   _REPOSITORY: bvc-crawler
   _IMAGE: bvc-crawler
   _SERVICE: bvc-crawler
-  _API_KEY_SECRET: projects/$PROJECT_ID/secrets/bvc-crawler-api-key
 
 options:
   logging: CLOUD_LOGGING_ONLY

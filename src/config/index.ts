@@ -10,7 +10,4 @@ export const config = {
     restApiUrl: "https://rest.bvc.com.co",
     webUrl: "https://www.bvc.com.co",
   },
-  security: {
-    apiKey: process.env.API_KEY,
-  },
 } as const;

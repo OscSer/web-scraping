@@ -3,13 +3,10 @@ import { config } from "./config/index.js";
 import { tickerRoutes } from "./routes/ticker.js";
 import { tokenManager } from "./services/token-manager.js";
 import { logger } from "./utils/logger.js";
-import { apiKeyAuth } from "./middleware/auth.js";
 
 const fastify = Fastify({
   logger,
 });
-
-fastify.addHook("onRequest", apiKeyAuth);
 
 fastify.register(tickerRoutes);
 
