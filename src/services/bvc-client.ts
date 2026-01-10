@@ -20,6 +20,22 @@ function isRetriableStatus(status: number): boolean {
   return status === 429 || status >= 500;
 }
 
+function toNumberOrNull(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export class BvcClient {
   async fetchLvl2Data(options?: {
     board?: string;
@@ -192,17 +208,17 @@ export class BvcClient {
       return {
         ticker: ticker.mnemonic,
         issuer: ticker.issuer,
-        price: ticker.lastPrice,
-        volume: ticker.volume,
-        quantity: ticker.quantity,
+        price: toNumberOrNull(ticker.lastPrice),
+        volume: toNumberOrNull(ticker.volume) ?? 0,
+        quantity: toNumberOrNull(ticker.quantity),
         board: ticker.board,
         tradeDate,
-        percentageVariation: ticker.percentageVariation,
-        absoluteVariation: ticker.absoluteVariation,
-        openPrice: ticker.openPrice,
-        maximumPrice: ticker.maximumPrice,
-        minimumPrice: ticker.minimumPrice,
-        averagePrice: ticker.averagePrice,
+        percentageVariation: toNumberOrNull(ticker.percentageVariation),
+        absoluteVariation: toNumberOrNull(ticker.absoluteVariation),
+        openPrice: toNumberOrNull(ticker.openPrice),
+        maximumPrice: toNumberOrNull(ticker.maximumPrice),
+        minimumPrice: toNumberOrNull(ticker.minimumPrice),
+        averagePrice: toNumberOrNull(ticker.averagePrice),
       };
     }
 

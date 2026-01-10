@@ -14,20 +14,24 @@ export interface TickerData {
   averagePrice: number | null;
 }
 
+type NumericLike = number | string;
+
+type NullableNumericLike = NumericLike | null;
+
 export interface BvcLvl2Response {
   data: {
     tab: Array<{
       issuer: string;
       mnemonic: string;
-      lastPrice: number | null;
-      openPrice: number | null;
-      maximumPrice: number | null;
-      averagePrice: number | null;
-      minimumPrice: number | null;
-      quantity: number | null;
-      volume: number;
-      absoluteVariation: number | null;
-      percentageVariation: number | null;
+      lastPrice: NullableNumericLike;
+      openPrice: NullableNumericLike;
+      maximumPrice: NullableNumericLike;
+      averagePrice: NullableNumericLike;
+      minimumPrice: NullableNumericLike;
+      quantity: NullableNumericLike;
+      volume: NullableNumericLike;
+      absoluteVariation: NullableNumericLike;
+      percentageVariation: NullableNumericLike;
       board: string;
     }>;
     marketStatus: {
