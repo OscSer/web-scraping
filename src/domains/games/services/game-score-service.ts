@@ -1,15 +1,20 @@
 import { GameScore } from "../types/game.js";
 import { steamReviewsApiClient } from "./steam-reviews-api-client.js";
+import { steamDetailsApiClient } from "./steam-details-api-client.js";
 import { logger } from "../../../shared/utils/logger.js";
 
 export class GameScoreService {
   async getScoreByAppId(appId: string): Promise<GameScore | null> {
     try {
-      const result = await steamReviewsApiClient.getScoreByAppId(appId);
+      const [scoreResult, gameName] = await Promise.all([
+        steamReviewsApiClient.getScoreByAppId(appId),
+        steamDetailsApiClient.getGameNameByAppId(appId),
+      ]);
 
-      if (result) {
+      if (scoreResult) {
         return {
-          score: result.score,
+          score: scoreResult.score,
+          name: gameName,
           source: "steam",
         };
       }
