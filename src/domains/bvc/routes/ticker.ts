@@ -46,17 +46,18 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        let price = await triiClient.getPriceByTicker(normalizedTicker);
+        let result: TickerData | null =
+          await triiClient.getPriceByTicker(normalizedTicker);
 
-        if (price === null) {
+        if (result === null) {
           fastify.log.info(
             { ticker: normalizedTicker },
             "[BVC] Ticker not found in TRII, trying TradingView",
           );
-          price = await tradingViewClient.getPriceByTicker(normalizedTicker);
+          result = await tradingViewClient.getPriceByTicker(normalizedTicker);
         }
 
-        if (price === null) {
+        if (result === null) {
           await sendError(
             reply,
             404,
@@ -68,7 +69,7 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
 
         const response: ApiResponse<TickerData> = {
           success: true,
-          data: { price },
+          data: result,
         };
 
         return reply.code(200).send(response);
@@ -81,13 +82,13 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         );
 
         try {
-          const price =
+          const result =
             await tradingViewClient.getPriceByTicker(normalizedTicker);
 
-          if (price !== null) {
+          if (result !== null) {
             const response: ApiResponse<TickerData> = {
               success: true,
-              data: { price },
+              data: result,
             };
             return reply.code(200).send(response);
           }

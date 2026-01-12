@@ -14,10 +14,18 @@ interface TradingViewResponse {
   description?: string;
 }
 
+export interface TradingViewTickerResult {
+  ticker: string;
+  price: number;
+  source: "tradingview";
+}
+
 const tradingViewCache = new InMemoryCache<number>(TRADINGVIEW_CACHE_TTL_MS);
 
 export class TradingViewClient {
-  async getPriceByTicker(ticker: string): Promise<number | null> {
+  async getPriceByTicker(
+    ticker: string,
+  ): Promise<TradingViewTickerResult | null> {
     const normalizedTicker = ticker.trim().toUpperCase();
     if (normalizedTicker.length === 0) return null;
 
@@ -56,7 +64,11 @@ export class TradingViewClient {
         throw new Error("TICKER_NOT_FOUND");
       });
 
-      return price;
+      return {
+        ticker: normalizedTicker,
+        price,
+        source: "tradingview",
+      };
     } catch (error) {
       if (
         error instanceof Error &&

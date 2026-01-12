@@ -47,8 +47,14 @@ function parseTriiStockListHtml(html: string): TriiPriceMap {
   return map;
 }
 
+export interface TriiTickerResult {
+  ticker: string;
+  price: number;
+  source: "trii";
+}
+
 export class TriiClient {
-  async getPriceByTicker(ticker: string): Promise<number | null> {
+  async getPriceByTicker(ticker: string): Promise<TriiTickerResult | null> {
     const normalizedTicker = ticker.trim().toLowerCase();
     if (normalizedTicker.length === 0) return null;
 
@@ -71,7 +77,14 @@ export class TriiClient {
       return parseTriiStockListHtml(html);
     });
 
-    return priceMap.get(normalizedTicker) ?? null;
+    const price = priceMap.get(normalizedTicker) ?? null;
+    if (price === null) return null;
+
+    return {
+      ticker: normalizedTicker.toUpperCase(),
+      price,
+      source: "trii",
+    };
   }
 }
 
