@@ -49,9 +49,9 @@ images:
 
 substitutions:
   _REGION: us-central1
-  _REPOSITORY: bvc-crawler
-  _IMAGE: bvc-crawler
-  _SERVICE: bvc-crawler
+  _REPOSITORY: web-scraping
+  _IMAGE: web-scraping
+  _SERVICE: web-scraping
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -1,4 +1,4 @@
-# Repository Agent Instructions (bvc-crawler)
+# Repository Agent Instructions
 
 These instructions are for agentic coding tools working in this repo.
 
@@ -144,4 +144,3 @@ These instructions are for agentic coding tools working in this repo.
 - `src/index.ts` (server startup/shutdown)
 - `src/services/bvc-client.ts` (HTTP + retry behavior)
 - `src/services/token-manager.ts` (token creation and caching)
-
