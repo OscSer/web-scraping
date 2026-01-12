@@ -1,4 +1,5 @@
 import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
 const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
 const TRII_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -59,13 +60,15 @@ export class TriiClient {
     if (normalizedTicker.length === 0) return null;
 
     const priceMap = await triiPriceCache.getOrFetch("stock-list", async () => {
-      const response = await fetch(TRII_STOCK_LIST_URL, {
-        headers: {
-          "user-agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-          accept: "text/html,application/xhtml+xml",
-        },
-      });
+      const response = await globalRateLimiter(() =>
+        fetch(TRII_STOCK_LIST_URL, {
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            accept: "text/html,application/xhtml+xml",
+          },
+        }),
+      );
 
       if (!response.ok) {
         throw new Error(

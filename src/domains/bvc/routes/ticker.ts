@@ -52,7 +52,7 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         if (result === null) {
           fastify.log.info(
             { ticker: normalizedTicker },
-            "[BVC] Ticker not found in TRII, trying TradingView",
+            "[BVC] Ticker not found in Trii, trying TradingView",
           );
           result = await tradingViewClient.getPriceByTicker(normalizedTicker);
         }
@@ -78,7 +78,7 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
 
         fastify.log.info(
           { ticker: normalizedTicker },
-          "[BVC] TRII failed, trying TradingView as fallback",
+          "[BVC] Trii failed, trying TradingView as fallback",
         );
 
         try {

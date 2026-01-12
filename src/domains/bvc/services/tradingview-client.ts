@@ -1,4 +1,5 @@
 import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
 const TRADINGVIEW_API_URL = "https://scanner.tradingview.com/symbol";
 const TRADINGVIEW_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -39,15 +40,17 @@ export class TradingViewClient {
         url.searchParams.set("fields", "close");
         url.searchParams.set("no_404", "true");
 
-        const response = await fetch(url.toString(), {
-          headers: {
-            "user-agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-            accept: "application/json",
-            origin: "https://es.tradingview.com",
-            referer: "https://es.tradingview.com/",
-          },
-        });
+        const response = await globalRateLimiter(() =>
+          fetch(url.toString(), {
+            headers: {
+              "user-agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+              accept: "application/json",
+              origin: "https://es.tradingview.com",
+              referer: "https://es.tradingview.com/",
+            },
+          }),
+        );
 
         if (!response.ok) {
           throw new Error(

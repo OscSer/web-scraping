@@ -1,6 +1,7 @@
 import { InMemoryCache } from "../../../shared/utils/cache.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { logger } from "../../../shared/utils/logger.js";
+import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
 const STEAM_DETAILS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const GAME_NAME_PLACEHOLDER = "Unknown Game";
@@ -25,14 +26,16 @@ export class SteamDetailsApiClient {
       const result = await steamDetailsCache.getOrFetch(cacheKey, async () => {
         const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
 
-        const response = await fetch(url, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            Accept: "application/json",
-            "Accept-Language": "en-US,en;q=0.5",
-          },
-        });
+        const response = await globalRateLimiter(() =>
+          fetch(url, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              Accept: "application/json",
+              "Accept-Language": "en-US,en;q=0.5",
+            },
+          }),
+        );
 
         if (!response.ok) {
           throw new SteamFetchError(
