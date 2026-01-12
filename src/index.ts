@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import Fastify from "fastify";
 import { config } from "./shared/config/index.js";
 import { bvcDomain } from "./domains/bvc/index.js";
-import { gamesDomain } from "./domains/games/index.js";
+import { gameDomain } from "./domains/game/index.js";
 import { logger } from "./shared/utils/logger.js";
 
 const fastify = Fastify({
@@ -45,7 +45,7 @@ fastify.addHook("onRequest", async (request, reply) => {
 });
 
 fastify.register(bvcDomain);
-fastify.register(gamesDomain);
+fastify.register(gameDomain);
 
 async function start() {
   try {

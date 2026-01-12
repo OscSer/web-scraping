@@ -96,7 +96,7 @@ export class SteamReviewsApiClient {
       }
       logger.error(
         { err: error, appId },
-        "[Games] Unexpected error in Steam Reviews API client",
+        "[Game] Unexpected error in Steam Reviews API client",
       );
       return null;
     }

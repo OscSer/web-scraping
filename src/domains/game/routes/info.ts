@@ -4,7 +4,7 @@ import { GameScore } from "../types/game.js";
 import { extractAppId } from "../services/steam-url-parser.js";
 import { gameScoreService } from "../services/game-score-service.js";
 
-interface ScoreQueryString {
+interface InfoQueryString {
   url: string;
 }
 
@@ -27,9 +27,9 @@ async function sendError(
   await reply.code(statusCode).send(createErrorResponse(code, message));
 }
 
-export const scoreRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get<{ Querystring: ScoreQueryString }>(
-    "/score",
+export const infoRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.get<{ Querystring: InfoQueryString }>(
+    "/info",
     async (request, reply) => {
       const { url } = request.query;
 
@@ -49,12 +49,12 @@ export const scoreRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      fastify.log.info({ appId, url }, "[Games] Fetching game score");
+      fastify.log.info({ appId, url }, "[Game] Fetching game info");
 
       try {
-        const score = await gameScoreService.getScoreByAppId(appId);
+        const gameInfo = await gameScoreService.getScoreByAppId(appId);
 
-        if (!score) {
+        if (!gameInfo) {
           await sendError(
             reply,
             404,
@@ -66,21 +66,21 @@ export const scoreRoutes: FastifyPluginAsync = async (fastify) => {
 
         const response: ApiResponse<GameScore> = {
           success: true,
-          data: score,
+          data: gameInfo,
         };
 
         await reply.code(200).send(response);
       } catch (error) {
         fastify.log.error(
           { err: error, appId },
-          "[Games] Error fetching score",
+          "[Game] Error fetching game info",
         );
 
         await sendError(
           reply,
           502,
           "SCRAPING_ERROR",
-          "Unable to fetch game score",
+          "Unable to fetch game info",
         );
       }
     },

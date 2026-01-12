@@ -75,12 +75,12 @@ export class SteamDetailsApiClient {
       ) {
         logger.warn(
           { err: error, appId },
-          "[Games] Failed to fetch game name from Steam Details API, using placeholder",
+          "[Game] Failed to fetch game name from Steam Details API, using placeholder",
         );
       } else {
         logger.error(
           { err: error, appId },
-          "[Games] Unexpected error in Steam Details API client",
+          "[Game] Unexpected error in Steam Details API client",
         );
       }
       return GAME_NAME_PLACEHOLDER;

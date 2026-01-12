@@ -5,11 +5,10 @@ import { logger } from "../../../shared/utils/logger.js";
 
 export class GameScoreService {
   async getScoreByAppId(appId: string): Promise<GameScore | null> {
+    const gameName = await steamDetailsApiClient.getGameNameByAppId(appId);
+
     try {
-      const [scoreResult, gameName] = await Promise.all([
-        steamReviewsApiClient.getScoreByAppId(appId),
-        steamDetailsApiClient.getGameNameByAppId(appId),
-      ]);
+      const scoreResult = await steamReviewsApiClient.getScoreByAppId(appId);
 
       if (scoreResult) {
         return {
@@ -23,9 +22,9 @@ export class GameScoreService {
     } catch (error) {
       logger.error(
         { err: error, appId },
-        "[Games] Failed to fetch score from Steam API",
+        "[Game] Failed to fetch game info from Steam API",
       );
-      return null;
+      throw error;
     }
   }
 }
