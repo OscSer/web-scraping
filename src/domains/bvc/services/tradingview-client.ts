@@ -1,4 +1,4 @@
-import { InMemoryCache } from "../utils/cache.js";
+import { InMemoryCache } from "../../../shared/utils/cache.js";
 
 const TRADINGVIEW_API_URL = "https://scanner.tradingview.com/symbol";
 const TRADINGVIEW_CACHE_TTL_MS = 5 * 60 * 1000;

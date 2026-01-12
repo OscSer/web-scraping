@@ -1,4 +1,4 @@
-import { InMemoryCache } from "../utils/cache.js";
+import { InMemoryCache } from "../../../shared/utils/cache.js";
 
 const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
 const TRII_CACHE_TTL_MS = 5 * 60 * 1000;

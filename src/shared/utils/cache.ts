@@ -1,4 +1,4 @@
-import { CacheEntry } from "../types/index.js";
+import { CacheEntry } from "../types/cache.js";
 
 export class InMemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
