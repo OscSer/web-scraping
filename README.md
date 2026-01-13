@@ -27,12 +27,3 @@ AUTH_DISABLED=false
 
 - `GET /bvc/ticker/:symbol` - Ticker information
 - `GET /game/info?url=<steam-url>` - Game information
-
-## Deployment
-
-Deployed on Google Cloud Run using Docker:
-
-```bash
-docker build -t web-scraping .
-docker run -p 3000:3000 web-scraping
-```
