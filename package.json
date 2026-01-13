@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "AUTH_DISABLED=true tsx watch src/index.ts",
+    "dev": "tsx --env-file=.env --watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint \"src/**/*.ts\"",
@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@upstash/redis": "^1.36.1",
     "fastify": "^4.28.1",
     "p-limit": "^7.2.0"
   },

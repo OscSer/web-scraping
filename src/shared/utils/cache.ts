@@ -1,12 +1,12 @@
-import { CacheEntry } from "../types/cache.js";
+import { Cache, CacheEntry } from "../types/cache.js";
 
-export class InMemoryCache<T> {
+export class InMemoryCache<T> implements Cache<T> {
   private cache = new Map<string, CacheEntry<T>>();
   private pendingRequests = new Map<string, Promise<T>>();
 
   constructor(private readonly ttlMs: number) {}
 
-  get(key: string): T | null {
+  async get(key: string): Promise<T | null> {
     const entry = this.cache.get(key);
     if (!entry) {
       return null;
@@ -20,7 +20,7 @@ export class InMemoryCache<T> {
     return entry.data;
   }
 
-  set(key: string, data: T): void {
+  async set(key: string, data: T): Promise<void> {
     this.cache.set(key, {
       data,
       expiresAt: Date.now() + this.ttlMs,
@@ -28,7 +28,7 @@ export class InMemoryCache<T> {
   }
 
   async getOrFetch(key: string, fetcher: () => Promise<T>): Promise<T> {
-    const cached = this.get(key);
+    const cached = await this.get(key);
     if (cached !== null) {
       return cached;
     }
@@ -39,8 +39,8 @@ export class InMemoryCache<T> {
     }
 
     const promise = fetcher()
-      .then((result) => {
-        this.set(key, result);
+      .then(async (result) => {
+        await this.set(key, result);
         return result;
       })
       .finally(() => {
@@ -51,12 +51,12 @@ export class InMemoryCache<T> {
     return promise;
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.cache.clear();
     this.pendingRequests.clear();
   }
 
-  delete(key: string): void {
+  async delete(key: string): Promise<void> {
     this.cache.delete(key);
   }
 }

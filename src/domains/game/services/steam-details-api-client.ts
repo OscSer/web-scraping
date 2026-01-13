@@ -1,9 +1,9 @@
-import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { createCache } from "../../../shared/utils/cache-factory.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { logger } from "../../../shared/utils/logger.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
-const STEAM_DETAILS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STEAM_DETAILS_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 const GAME_NAME_PLACEHOLDER = "Unknown Game";
 
 interface SteamAppDetailsResponse {
@@ -16,7 +16,7 @@ interface SteamAppDetailsResponse {
   };
 }
 
-const steamDetailsCache = new InMemoryCache<string>(STEAM_DETAILS_CACHE_TTL_MS);
+const steamDetailsCache = createCache<string>(STEAM_DETAILS_CACHE_TTL_MS);
 
 export class SteamDetailsApiClient {
   async getGameNameByAppId(appId: string): Promise<string> {

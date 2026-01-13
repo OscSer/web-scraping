@@ -1,8 +1,8 @@
-import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
 const TRADINGVIEW_API_URL = "https://scanner.tradingview.com/symbol";
-const TRADINGVIEW_CACHE_TTL_MS = 5 * 60 * 1000;
+const TRADINGVIEW_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 interface TradingViewResponse {
   close?: number;
@@ -21,7 +21,7 @@ export interface TradingViewTickerResult {
   source: "tradingview";
 }
 
-const tradingViewCache = new InMemoryCache<number>(TRADINGVIEW_CACHE_TTL_MS);
+const tradingViewCache = createCache<number>(TRADINGVIEW_CACHE_TTL_MS);
 
 export class TradingViewClient {
   async getPriceByTicker(

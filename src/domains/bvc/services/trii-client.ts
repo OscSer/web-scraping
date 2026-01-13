@@ -1,12 +1,12 @@
-import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
 const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
-const TRII_CACHE_TTL_MS = 5 * 60 * 1000;
+const TRII_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 type TriiPriceMap = Map<string, number>;
 
-const triiPriceCache = new InMemoryCache<TriiPriceMap>(TRII_CACHE_TTL_MS);
+const triiCache = createCache<TriiPriceMap>(TRII_CACHE_TTL_MS);
 
 function parsePrice(raw: string): number | null {
   const normalized = raw.replaceAll("$", "").replaceAll(",", "").trim();
@@ -59,7 +59,7 @@ export class TriiClient {
     const normalizedTicker = ticker.trim().toLowerCase();
     if (normalizedTicker.length === 0) return null;
 
-    const priceMap = await triiPriceCache.getOrFetch("stock-list", async () => {
+    const priceMap = await triiCache.getOrFetch("stock-list", async () => {
       const response = await globalRateLimiter(() =>
         fetch(TRII_STOCK_LIST_URL, {
           headers: {

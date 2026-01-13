@@ -1,9 +1,9 @@
-import { InMemoryCache } from "../../../shared/utils/cache.js";
+import { createCache } from "../../../shared/utils/cache-factory.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { logger } from "../../../shared/utils/logger.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 
-const STEAM_API_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const STEAM_API_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
 interface SteamReviewsResponse {
   success: number;
@@ -22,7 +22,7 @@ interface SteamScore {
   totalReviews: number;
 }
 
-const steamApiCache = new InMemoryCache<SteamScore>(STEAM_API_CACHE_TTL_MS);
+const steamReviewsCache = createCache<SteamScore>(STEAM_API_CACHE_TTL_MS);
 
 function calculateScore(data: SteamReviewsResponse): SteamScore | null {
   const { total_positive, total_reviews } = data.query_summary;
@@ -48,7 +48,7 @@ export class SteamReviewsApiClient {
     const cacheKey = `steam-api-${appId}`;
 
     try {
-      const result = await steamApiCache.getOrFetch(cacheKey, async () => {
+      const result = await steamReviewsCache.getOrFetch(cacheKey, async () => {
         const url = `https://store.steampowered.com/appreviews/${appId}?json=1&filter=all&language=all&purchase_type=all&num_per_page=0`;
 
         const response = await globalRateLimiter(() =>
