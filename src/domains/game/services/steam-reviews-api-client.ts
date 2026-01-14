@@ -1,10 +1,7 @@
-import { createCache } from "../../../shared/utils/cache-factory.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
 import { handleSteamError } from "../utils/steam-error-handler.js";
-
-const STEAM_API_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
 interface SteamReviewsResponse {
   success: number;
@@ -17,8 +14,6 @@ interface SteamReviewsResponse {
 interface SteamScore {
   score: number;
 }
-
-const steamReviewsCache = createCache<SteamScore>(STEAM_API_CACHE_TTL_MS);
 
 function calculateScore(data: SteamReviewsResponse): SteamScore | null {
   const { total_positive, total_reviews } = data.query_summary;
@@ -40,50 +35,44 @@ function calculateScore(data: SteamReviewsResponse): SteamScore | null {
 
 class SteamReviewsApiClient {
   async getScoreByAppId(appId: string): Promise<SteamScore | null> {
-    const cacheKey = `steam-api-${appId}`;
-
     try {
-      const result = await steamReviewsCache.getOrFetch(cacheKey, async () => {
-        const url = `https://store.steampowered.com/appreviews/${appId}?json=1&filter=all&language=all&purchase_type=all&num_per_page=0`;
+      const url = `https://store.steampowered.com/appreviews/${appId}?json=1&filter=all&language=all&purchase_type=all&num_per_page=0`;
 
-        const response = await globalRateLimiter(() =>
-          fetch(url, {
-            headers: {
-              "User-Agent": USER_AGENT,
-              Accept: "application/json",
-              "Accept-Language": "en-US,en;q=0.5",
-            },
-          }),
+      const response = await globalRateLimiter(() =>
+        fetch(url, {
+          headers: {
+            "User-Agent": USER_AGENT,
+            Accept: "application/json",
+            "Accept-Language": "en-US,en;q=0.5",
+          },
+        }),
+      );
+
+      if (!response.ok) {
+        throw new SteamFetchError(
+          `Failed to fetch Steam reviews API for app ${appId}`,
+          response.status,
+          response.statusText,
         );
+      }
 
-        if (!response.ok) {
-          throw new SteamFetchError(
-            `Failed to fetch Steam reviews API for app ${appId}`,
-            response.status,
-            response.statusText,
-          );
-        }
+      const data = (await response.json()) as SteamReviewsResponse;
 
-        const data = (await response.json()) as SteamReviewsResponse;
+      if (data.success !== 1) {
+        throw new SteamParseError(
+          `Steam API returned success=${data.success} for app ${appId}`,
+        );
+      }
 
-        if (data.success !== 1) {
-          throw new SteamParseError(
-            `Steam API returned success=${data.success} for app ${appId}`,
-          );
-        }
+      const score = calculateScore(data);
 
-        const score = calculateScore(data);
+      if (!score) {
+        throw new SteamParseError(
+          `Failed to calculate score from Steam API data for app ${appId}`,
+        );
+      }
 
-        if (!score) {
-          throw new SteamParseError(
-            `Failed to calculate score from Steam API data for app ${appId}`,
-          );
-        }
-
-        return score;
-      });
-
-      return result;
+      return score;
     } catch (error) {
       if (
         error instanceof SteamFetchError ||

@@ -1,8 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 import { ApiResponse } from "../../../shared/types/api.js";
-import { GameScore } from "../types/game.js";
+import { GameInfo } from "../types/game.js";
 import { extractAppId } from "../services/steam-url-parser.js";
-import { gameScoreService } from "../services/game-score-service.js";
+import { gameInfoService } from "../services/game-info-service.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
 
 interface InfoQueryString {
@@ -34,19 +34,9 @@ export const infoRoutes: FastifyPluginAsync = async (fastify) => {
       fastify.log.info({ appId, url }, "[Game] Fetching game info");
 
       try {
-        const gameInfo = await gameScoreService.getScoreByAppId(appId);
+        const gameInfo = await gameInfoService.getGameInfoByAppId(appId);
 
-        if (!gameInfo) {
-          await sendError(
-            reply,
-            404,
-            "GAME_NOT_FOUND",
-            `Game with App ID "${appId}" not found or has no reviews`,
-          );
-          return;
-        }
-
-        const response: ApiResponse<GameScore> = {
+        const response: ApiResponse<GameInfo> = {
           success: true,
           data: gameInfo,
         };
