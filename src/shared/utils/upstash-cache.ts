@@ -22,10 +22,6 @@ function getRedisClient(): Redis {
   return redisClient;
 }
 
-interface CacheMetadata {
-  type: "map" | "object";
-}
-
 export class UpstashCache<T> implements Cache<T> {
   private redis: Redis;
   private pendingRequests = new Map<string, Promise<T>>();
@@ -41,31 +37,13 @@ export class UpstashCache<T> implements Cache<T> {
     return `${this.keyPrefix}${key}`;
   }
 
-  private getMetadataKey(key: string): string {
-    return `${this.keyPrefix}${key}:meta`;
-  }
-
   async get(key: string): Promise<T | null> {
     try {
       const fullKey = this.getFullKey(key);
-      const [value, metadata] = await Promise.all([
-        this.redis.get(fullKey),
-        this.redis.get<CacheMetadata>(this.getMetadataKey(key)),
-      ]);
+      const value = await this.redis.get(fullKey);
 
       if (value === null) {
         return null;
-      }
-
-      if (metadata?.type === "map") {
-        if (typeof value !== "object" || Array.isArray(value)) {
-          logger.error(
-            { key, value },
-            "[UpstashCache] Invalid value type for map metadata",
-          );
-          return null;
-        }
-        return new Map(Object.entries(value as Record<string, unknown>)) as T;
       }
 
       return value as T;
@@ -81,21 +59,7 @@ export class UpstashCache<T> implements Cache<T> {
   async set(key: string, data: T): Promise<void> {
     try {
       const fullKey = this.getFullKey(key);
-      let value: unknown;
-      let metadata: CacheMetadata | null = null;
-
-      if (data instanceof Map) {
-        value = Object.fromEntries(data);
-        metadata = { type: "map" };
-      } else {
-        value = data;
-        metadata = { type: "object" };
-      }
-
-      await Promise.all([
-        this.redis.setex(fullKey, this.ttlSeconds, value),
-        this.redis.setex(this.getMetadataKey(key), this.ttlSeconds, metadata),
-      ]);
+      await this.redis.setex(fullKey, this.ttlSeconds, data);
     } catch (error) {
       logger.error(
         { err: error, key },
@@ -156,8 +120,7 @@ export class UpstashCache<T> implements Cache<T> {
   async delete(key: string): Promise<void> {
     try {
       const fullKey = this.getFullKey(key);
-      const metadataKey = this.getMetadataKey(key);
-      await this.redis.del(fullKey, metadataKey);
+      await this.redis.del(fullKey);
     } catch (error) {
       logger.error({ err: error, key }, "[UpstashCache] Error deleting key");
     }

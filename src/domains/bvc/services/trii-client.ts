@@ -4,7 +4,7 @@ import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js"
 const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
 const TRII_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
-type TriiPriceMap = Map<string, number>;
+type TriiPriceMap = Record<string, number>;
 
 const triiCache = createCache<TriiPriceMap>(TRII_CACHE_TTL_MS);
 
@@ -20,7 +20,7 @@ function parsePrice(raw: string): number | null {
 }
 
 function parseTriiStockListHtml(html: string): TriiPriceMap {
-  const map: TriiPriceMap = new Map();
+  const map: TriiPriceMap = {};
 
   const sectionRegex =
     /<div\s+id="(?:local|global)"[\s\S]*?<\/div>\s*<\/section>/g;
@@ -41,7 +41,7 @@ function parseTriiStockListHtml(html: string): TriiPriceMap {
       const price = parsePrice(priceRaw);
       if (price === null) continue;
 
-      map.set(ticker, price);
+      map[ticker] = price;
     }
   }
 
@@ -80,7 +80,7 @@ export class TriiClient {
       return parseTriiStockListHtml(html);
     });
 
-    const price = priceMap.get(normalizedTicker) ?? null;
+    const price = priceMap[normalizedTicker] ?? null;
     if (price === null) return null;
 
     return {
