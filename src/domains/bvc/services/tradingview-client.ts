@@ -1,5 +1,7 @@
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
+import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
+import { USER_AGENT } from "../../../shared/config/index.js";
 
 const TRADINGVIEW_API_URL = "https://scanner.tradingview.com/symbol";
 const TRADINGVIEW_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
@@ -20,14 +22,14 @@ class TradingViewClient {
   async getPriceByTicker(
     ticker: string,
   ): Promise<TradingViewTickerResult | null> {
-    const normalizedTicker = ticker.trim().toUpperCase();
-    if (normalizedTicker.length === 0) return null;
+    const normalizedTicker = normalizeTicker(ticker);
+    if (!normalizedTicker) return null;
 
-    const cacheKey = normalizedTicker;
+    const cacheKey = normalizedTicker.toUpperCase();
 
     try {
       const price = await tradingViewCache.getOrFetch(cacheKey, async () => {
-        const symbol = `BVC:${normalizedTicker}`;
+        const symbol = `BVC:${normalizedTicker.toUpperCase()}`;
         const url = new URL(TRADINGVIEW_API_URL);
         url.searchParams.set("symbol", symbol);
         url.searchParams.set("fields", "close");
@@ -36,8 +38,7 @@ class TradingViewClient {
         const response = await globalRateLimiter(() =>
           fetch(url.toString(), {
             headers: {
-              "user-agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+              "user-agent": USER_AGENT,
               accept: "application/json",
               origin: "https://es.tradingview.com",
               referer: "https://es.tradingview.com/",
@@ -61,7 +62,7 @@ class TradingViewClient {
       });
 
       return {
-        ticker: normalizedTicker,
+        ticker: normalizedTicker.toUpperCase(),
         price,
         source: "tradingview",
       };

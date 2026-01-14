@@ -1,7 +1,8 @@
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import { logger } from "../../../shared/utils/logger.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
+import { USER_AGENT } from "../../../shared/config/index.js";
+import { handleSteamError } from "../utils/steam-error-handler.js";
 
 const STEAM_DETAILS_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 const GAME_NAME_PLACEHOLDER = "Unknown Game";
@@ -28,8 +29,7 @@ class SteamDetailsApiClient {
         const response = await globalRateLimiter(() =>
           fetch(url, {
             headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              "User-Agent": USER_AGENT,
               Accept: "application/json",
               "Accept-Language": "en-US,en;q=0.5",
             },
@@ -71,21 +71,12 @@ class SteamDetailsApiClient {
 
       return result;
     } catch (error) {
-      if (
-        error instanceof SteamFetchError ||
-        error instanceof SteamParseError
-      ) {
-        logger.warn(
-          { err: error, appId },
-          "[Game] Failed to fetch game name from Steam Details API, using placeholder",
-        );
-      } else {
-        logger.error(
-          { err: error, appId },
-          "[Game] Unexpected error in Steam Details API client",
-        );
-      }
-      return GAME_NAME_PLACEHOLDER;
+      return handleSteamError(
+        error,
+        appId,
+        "game name from Steam Details API",
+        GAME_NAME_PLACEHOLDER,
+      );
     }
   }
 }

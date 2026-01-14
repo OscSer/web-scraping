@@ -1,5 +1,7 @@
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
+import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
+import { USER_AGENT } from "../../../shared/config/index.js";
 
 const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
 const TRII_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
@@ -56,15 +58,14 @@ interface TriiTickerResult {
 
 class TriiClient {
   async getPriceByTicker(ticker: string): Promise<TriiTickerResult | null> {
-    const normalizedTicker = ticker.trim().toLowerCase();
-    if (normalizedTicker.length === 0) return null;
+    const normalizedTicker = normalizeTicker(ticker);
+    if (!normalizedTicker) return null;
 
     const priceMap = await triiCache.getOrFetch("stock-list", async () => {
       const response = await globalRateLimiter(() =>
         fetch(TRII_STOCK_LIST_URL, {
           headers: {
-            "user-agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "user-agent": USER_AGENT,
             accept: "text/html,application/xhtml+xml",
           },
         }),

@@ -1,7 +1,8 @@
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import { logger } from "../../../shared/utils/logger.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
+import { USER_AGENT } from "../../../shared/config/index.js";
+import { handleSteamError } from "../utils/steam-error-handler.js";
 
 const STEAM_API_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
@@ -48,8 +49,7 @@ class SteamReviewsApiClient {
         const response = await globalRateLimiter(() =>
           fetch(url, {
             headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              "User-Agent": USER_AGENT,
               Accept: "application/json",
               "Accept-Language": "en-US,en;q=0.5",
             },
@@ -91,11 +91,7 @@ class SteamReviewsApiClient {
       ) {
         throw error;
       }
-      logger.error(
-        { err: error, appId },
-        "[Game] Unexpected error in Steam Reviews API client",
-      );
-      return null;
+      return handleSteamError(error, appId, "Steam Reviews API client", null);
     }
   }
 }

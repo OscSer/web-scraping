@@ -4,15 +4,10 @@ import { tradingViewClient } from "../services/tradingview-client.js";
 import { TickerData } from "../types/ticker.js";
 import { ApiResponse } from "../../../shared/types/api.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
+import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
 
 interface TickerParams {
   ticker: string;
-}
-
-function normalizeTicker(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) return null;
-  return trimmed.toLowerCase();
 }
 
 export const tickerRoutes: FastifyPluginAsync = async (fastify) => {

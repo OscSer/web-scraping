@@ -104,25 +104,4 @@ export class UpstashCache<T> implements Cache<T> {
     this.pendingRequests.set(key, promise);
     return promise;
   }
-
-  async clear(): Promise<void> {
-    try {
-      const keys = await this.redis.keys(`${this.keyPrefix}*`);
-      if (keys.length > 0) {
-        await this.redis.del(...keys);
-      }
-      this.pendingRequests.clear();
-    } catch (error) {
-      logger.error({ err: error }, "[UpstashCache] Error clearing cache");
-    }
-  }
-
-  async delete(key: string): Promise<void> {
-    try {
-      const fullKey = this.getFullKey(key);
-      await this.redis.del(fullKey);
-    } catch (error) {
-      logger.error({ err: error, key }, "[UpstashCache] Error deleting key");
-    }
-  }
 }
