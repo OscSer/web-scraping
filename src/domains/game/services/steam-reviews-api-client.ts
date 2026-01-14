@@ -8,18 +8,13 @@ const STEAM_API_CACHE_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 interface SteamReviewsResponse {
   success: number;
   query_summary: {
-    num_reviews: number;
-    review_score: number;
-    review_score_desc: string;
     total_positive: number;
-    total_negative: number;
     total_reviews: number;
   };
 }
 
 interface SteamScore {
   score: number;
-  totalReviews: number;
 }
 
 const steamReviewsCache = createCache<SteamScore>(STEAM_API_CACHE_TTL_MS);
@@ -39,11 +34,10 @@ function calculateScore(data: SteamReviewsResponse): SteamScore | null {
 
   return {
     score: parseFloat(score.toFixed(2)),
-    totalReviews: total_reviews,
   };
 }
 
-export class SteamReviewsApiClient {
+class SteamReviewsApiClient {
   async getScoreByAppId(appId: string): Promise<SteamScore | null> {
     const cacheKey = `steam-api-${appId}`;
 

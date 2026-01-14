@@ -11,14 +11,13 @@ interface SteamAppDetailsResponse {
     success: boolean;
     data?: {
       name?: string;
-      type?: string;
     };
   };
 }
 
 const steamDetailsCache = createCache<string>(STEAM_DETAILS_CACHE_TTL_MS);
 
-export class SteamDetailsApiClient {
+class SteamDetailsApiClient {
   async getGameNameByAppId(appId: string): Promise<string> {
     const cacheKey = `steam-details-${appId}`;
 

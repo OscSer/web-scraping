@@ -3,7 +3,7 @@ import { steamReviewsApiClient } from "./steam-reviews-api-client.js";
 import { steamDetailsApiClient } from "./steam-details-api-client.js";
 import { logger } from "../../../shared/utils/logger.js";
 
-export class GameScoreService {
+class GameScoreService {
   async getScoreByAppId(appId: string): Promise<GameScore | null> {
     const [nameResult, scoreResult] = await Promise.allSettled([
       steamDetailsApiClient.getGameNameByAppId(appId),

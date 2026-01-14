@@ -6,16 +6,9 @@ const TRADINGVIEW_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 interface TradingViewResponse {
   close?: number;
-  volume?: number;
-  change?: number;
-  change_abs?: number;
-  high?: number;
-  low?: number;
-  open?: number;
-  description?: string;
 }
 
-export interface TradingViewTickerResult {
+interface TradingViewTickerResult {
   ticker: string;
   price: number;
   source: "tradingview";
@@ -23,7 +16,7 @@ export interface TradingViewTickerResult {
 
 const tradingViewCache = createCache<number>(TRADINGVIEW_CACHE_TTL_MS);
 
-export class TradingViewClient {
+class TradingViewClient {
   async getPriceByTicker(
     ticker: string,
   ): Promise<TradingViewTickerResult | null> {

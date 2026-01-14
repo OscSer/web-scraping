@@ -48,13 +48,13 @@ function parseTriiStockListHtml(html: string): TriiPriceMap {
   return map;
 }
 
-export interface TriiTickerResult {
+interface TriiTickerResult {
   ticker: string;
   price: number;
   source: "trii";
 }
 
-export class TriiClient {
+class TriiClient {
   async getPriceByTicker(ticker: string): Promise<TriiTickerResult | null> {
     const normalizedTicker = ticker.trim().toLowerCase();
     if (normalizedTicker.length === 0) return null;
