@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { Cache } from "../types/cache.js";
 import { config } from "../config/index.js";
 import { UpstashCache } from "./upstash-cache.js";
@@ -16,10 +17,14 @@ class NoOpCache<T> implements Cache<T> {
   }
 }
 
-export function createCache<T>(ttlMs: number): Cache<T> {
+export function createCache<T>(
+  ttlMs: number,
+  logger: FastifyBaseLogger,
+): Cache<T> {
   if (config.cache.isDisabled) {
     return new NoOpCache<T>();
   }
 
-  return new UpstashCache<T>(ttlMs);
+  const cacheLogger = logger.child({}, { msgPrefix: "[Cache] " });
+  return new UpstashCache<T>(ttlMs, cacheLogger);
 }

@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
@@ -14,7 +15,13 @@ interface SteamAppDetailsResponse {
   };
 }
 
-class SteamDetailsApiClient {
+export class SteamDetailsApiClient {
+  private logger: FastifyBaseLogger;
+
+  constructor(logger: FastifyBaseLogger) {
+    this.logger = logger;
+  }
+
   async getGameNameByAppId(appId: string): Promise<string> {
     try {
       const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
@@ -62,6 +69,7 @@ class SteamDetailsApiClient {
       return gameName;
     } catch (error) {
       return handleSteamError(
+        this.logger,
         error,
         appId,
         "game name from Steam Details API",
@@ -70,5 +78,3 @@ class SteamDetailsApiClient {
     }
   }
 }
-
-export const steamDetailsApiClient = new SteamDetailsApiClient();

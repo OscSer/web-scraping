@@ -2,14 +2,23 @@ import { FastifyPluginAsync } from "fastify";
 import { ApiResponse } from "../../../shared/types/api.js";
 import { GameInfo } from "../types/game.js";
 import { extractAppId } from "../services/steam-url-parser.js";
-import { gameInfoService } from "../services/game-info-service.js";
+import { GameInfoService } from "../services/game-info-service.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
 
 interface InfoQueryString {
   url: string;
 }
 
-export const infoRoutes: FastifyPluginAsync = async (fastify) => {
+interface InfoRoutesOptions {
+  gameInfoService: GameInfoService;
+}
+
+export const infoRoutes: FastifyPluginAsync<InfoRoutesOptions> = async (
+  fastify,
+  opts,
+) => {
+  const { gameInfoService } = opts;
+
   fastify.get<{ Querystring: InfoQueryString }>(
     "/info",
     async (request, reply) => {
@@ -31,7 +40,7 @@ export const infoRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      fastify.log.info({ appId, url }, "[Game] Fetching game info");
+      fastify.log.info({ appId, url }, "Fetching game info");
 
       try {
         const gameInfo = await gameInfoService.getGameInfoByAppId(appId);
@@ -43,10 +52,7 @@ export const infoRoutes: FastifyPluginAsync = async (fastify) => {
 
         await reply.code(200).send(response);
       } catch (error) {
-        fastify.log.error(
-          { err: error, appId },
-          "[Game] Error fetching game info",
-        );
+        fastify.log.error({ err: error, appId }, "Error fetching game info");
 
         await sendError(
           reply,

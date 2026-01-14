@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
@@ -33,7 +34,13 @@ function calculateScore(data: SteamReviewsResponse): SteamScore | null {
   };
 }
 
-class SteamReviewsApiClient {
+export class SteamReviewsApiClient {
+  private logger: FastifyBaseLogger;
+
+  constructor(logger: FastifyBaseLogger) {
+    this.logger = logger;
+  }
+
   async getScoreByAppId(appId: string): Promise<SteamScore | null> {
     try {
       const url = `https://store.steampowered.com/appreviews/${appId}?json=1&filter=all&language=all&purchase_type=all&num_per_page=0`;
@@ -80,9 +87,13 @@ class SteamReviewsApiClient {
       ) {
         throw error;
       }
-      return handleSteamError(error, appId, "Steam Reviews API client", null);
+      return handleSteamError(
+        this.logger,
+        error,
+        appId,
+        "Steam Reviews API client",
+        null,
+      );
     }
   }
 }
-
-export const steamReviewsApiClient = new SteamReviewsApiClient();

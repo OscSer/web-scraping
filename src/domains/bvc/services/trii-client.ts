@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
@@ -7,8 +8,6 @@ const TRII_STOCK_LIST_URL = "https://trii.co/stock-list";
 const TRII_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 type TriiPriceMap = Record<string, number>;
-
-const triiCache = createCache<TriiPriceMap>(TRII_CACHE_TTL_MS);
 
 function parsePrice(raw: string): number | null {
   const normalized = raw.replaceAll("$", "").replaceAll(",", "").trim();
@@ -56,12 +55,18 @@ interface TriiTickerResult {
   source: "trii";
 }
 
-class TriiClient {
+export class TriiClient {
+  private triiCache;
+
+  constructor(logger: FastifyBaseLogger) {
+    this.triiCache = createCache<TriiPriceMap>(TRII_CACHE_TTL_MS, logger);
+  }
+
   async getPriceByTicker(ticker: string): Promise<TriiTickerResult | null> {
     const normalizedTicker = normalizeTicker(ticker);
     if (!normalizedTicker) return null;
 
-    const priceMap = await triiCache.getOrFetch("stocks", async () => {
+    const priceMap = await this.triiCache.getOrFetch("stocks", async () => {
       const response = await globalRateLimiter(() =>
         fetch(TRII_STOCK_LIST_URL, {
           headers: {
@@ -91,5 +96,3 @@ class TriiClient {
     };
   }
 }
-
-export const triiClient = new TriiClient();

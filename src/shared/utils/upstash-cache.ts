@@ -1,7 +1,7 @@
+import type { FastifyBaseLogger } from "fastify";
 import { Redis } from "@upstash/redis";
 import { Cache } from "../types/cache.js";
 import { config } from "../config/index.js";
-import { logger } from "./logger.js";
 
 let redisClient: Redis | null = null;
 
@@ -27,10 +27,12 @@ export class UpstashCache<T> implements Cache<T> {
   private pendingRequests = new Map<string, Promise<T>>();
   private readonly ttlSeconds: number;
   private readonly keyPrefix = "ws:";
+  private readonly logger: FastifyBaseLogger;
 
-  constructor(ttlMs: number) {
+  constructor(ttlMs: number, logger: FastifyBaseLogger) {
     this.redis = getRedisClient();
     this.ttlSeconds = Math.ceil(ttlMs / 1000);
+    this.logger = logger;
   }
 
   private getFullKey(key: string): string {
@@ -48,10 +50,7 @@ export class UpstashCache<T> implements Cache<T> {
 
       return value as T;
     } catch (error) {
-      logger.error(
-        { err: error, key },
-        "[UpstashCache] Error getting value from cache",
-      );
+      this.logger.error({ err: error, key }, "Error getting value from cache");
       return null;
     }
   }
@@ -61,10 +60,7 @@ export class UpstashCache<T> implements Cache<T> {
       const fullKey = this.getFullKey(key);
       await this.redis.setex(fullKey, this.ttlSeconds, data);
     } catch (error) {
-      logger.error(
-        { err: error, key },
-        "[UpstashCache] Error setting value in cache",
-      );
+      this.logger.error({ err: error, key }, "Error setting value in cache");
     }
   }
 
@@ -72,7 +68,7 @@ export class UpstashCache<T> implements Cache<T> {
     const cached = await this.get(key);
     if (cached !== null) {
       if (process.env.NODE_ENV !== "production") {
-        logger.info({ key }, "[UpstashCache] Cache hit");
+        this.logger.info({ key }, "Cache hit");
       }
       return cached;
     }
@@ -86,15 +82,12 @@ export class UpstashCache<T> implements Cache<T> {
       .then(async (result) => {
         await this.set(key, result);
         if (process.env.NODE_ENV !== "production") {
-          logger.info({ key }, "[UpstashCache] Cache miss - stored new value");
+          this.logger.info({ key }, "Cache miss - stored new value");
         }
         return result;
       })
       .catch((error) => {
-        logger.error(
-          { err: error, key },
-          "[UpstashCache] Error fetching value",
-        );
+        this.logger.error({ err: error, key }, "Error fetching value");
         throw error;
       })
       .finally(() => {

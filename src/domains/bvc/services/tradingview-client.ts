@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { createCache } from "../../../shared/utils/cache-factory.js";
 import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
@@ -16,9 +17,16 @@ interface TradingViewTickerResult {
   source: "tradingview";
 }
 
-const tradingViewCache = createCache<number>(TRADINGVIEW_CACHE_TTL_MS);
+export class TradingViewClient {
+  private tradingViewCache;
 
-class TradingViewClient {
+  constructor(logger: FastifyBaseLogger) {
+    this.tradingViewCache = createCache<number>(
+      TRADINGVIEW_CACHE_TTL_MS,
+      logger,
+    );
+  }
+
   async getPriceByTicker(
     ticker: string,
   ): Promise<TradingViewTickerResult | null> {
@@ -28,38 +36,41 @@ class TradingViewClient {
     const cacheKey = `stock:${normalizedTicker}`;
 
     try {
-      const price = await tradingViewCache.getOrFetch(cacheKey, async () => {
-        const symbol = `BVC:${normalizedTicker.toUpperCase()}`;
-        const url = new URL(TRADINGVIEW_API_URL);
-        url.searchParams.set("symbol", symbol);
-        url.searchParams.set("fields", "close");
-        url.searchParams.set("no_404", "true");
+      const price = await this.tradingViewCache.getOrFetch(
+        cacheKey,
+        async () => {
+          const symbol = `BVC:${normalizedTicker.toUpperCase()}`;
+          const url = new URL(TRADINGVIEW_API_URL);
+          url.searchParams.set("symbol", symbol);
+          url.searchParams.set("fields", "close");
+          url.searchParams.set("no_404", "true");
 
-        const response = await globalRateLimiter(() =>
-          fetch(url.toString(), {
-            headers: {
-              "user-agent": USER_AGENT,
-              accept: "application/json",
-              origin: "https://es.tradingview.com",
-              referer: "https://es.tradingview.com/",
-            },
-          }),
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `TRADINGVIEW_FETCH_ERROR: ${response.status} ${response.statusText}`,
+          const response = await globalRateLimiter(() =>
+            fetch(url.toString(), {
+              headers: {
+                "user-agent": USER_AGENT,
+                accept: "application/json",
+                origin: "https://es.tradingview.com",
+                referer: "https://es.tradingview.com/",
+              },
+            }),
           );
-        }
 
-        const data = (await response.json()) as TradingViewResponse;
+          if (!response.ok) {
+            throw new Error(
+              `TRADINGVIEW_FETCH_ERROR: ${response.status} ${response.statusText}`,
+            );
+          }
 
-        if (typeof data.close === "number" && Number.isFinite(data.close)) {
-          return data.close;
-        }
+          const data = (await response.json()) as TradingViewResponse;
 
-        throw new Error("TICKER_NOT_FOUND");
-      });
+          if (typeof data.close === "number" && Number.isFinite(data.close)) {
+            return data.close;
+          }
+
+          throw new Error("TICKER_NOT_FOUND");
+        },
+      );
 
       return {
         ticker: normalizedTicker.toUpperCase(),
@@ -77,5 +88,3 @@ class TradingViewClient {
     }
   }
 }
-
-export const tradingViewClient = new TradingViewClient();

@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from "fastify";
-import { triiClient } from "../services/trii-client.js";
-import { tradingViewClient } from "../services/tradingview-client.js";
+import { TriiClient } from "../services/trii-client.js";
+import { TradingViewClient } from "../services/tradingview-client.js";
 import { TickerData } from "../types/ticker.js";
 import { ApiResponse } from "../../../shared/types/api.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
@@ -10,7 +10,17 @@ interface TickerParams {
   ticker: string;
 }
 
-export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
+interface TickerRoutesOptions {
+  triiClient: TriiClient;
+  tradingViewClient: TradingViewClient;
+}
+
+export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
+  fastify,
+  opts,
+) => {
+  const { triiClient, tradingViewClient } = opts;
+
   fastify.get<{ Params: TickerParams }>(
     "/ticker/:ticker",
     async (request, reply) => {
@@ -29,7 +39,7 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         if (result === null) {
           fastify.log.info(
             { ticker: normalizedTicker },
-            "[BVC] Ticker not found in Trii, trying TradingView",
+            "Ticker not found in Trii, trying TradingView",
           );
           result = await tradingViewClient.getPriceByTicker(normalizedTicker);
         }
@@ -51,11 +61,11 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
 
         return reply.code(200).send(response);
       } catch (error) {
-        fastify.log.error({ err: error }, "[BVC] Error fetching ticker");
+        fastify.log.error({ err: error }, "Error fetching ticker");
 
         fastify.log.info(
           { ticker: normalizedTicker },
-          "[BVC] Trii failed, trying TradingView as fallback",
+          "Trii failed, trying TradingView as fallback",
         );
 
         try {
@@ -72,7 +82,7 @@ export const tickerRoutes: FastifyPluginAsync = async (fastify) => {
         } catch (fallbackError) {
           fastify.log.error(
             { err: fallbackError },
-            "[BVC] TradingView fallback also failed",
+            "TradingView fallback also failed",
           );
         }
 
