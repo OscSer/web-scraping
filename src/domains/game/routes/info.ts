@@ -1,30 +1,12 @@
-import { FastifyPluginAsync, FastifyReply } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { ApiResponse } from "../../../shared/types/api.js";
 import { GameScore } from "../types/game.js";
 import { extractAppId } from "../services/steam-url-parser.js";
 import { gameScoreService } from "../services/game-score-service.js";
+import { sendError } from "../../../shared/utils/api-helpers.js";
 
 interface InfoQueryString {
   url: string;
-}
-
-function createErrorResponse(
-  code: string,
-  message: string,
-): ApiResponse<never> {
-  return {
-    success: false,
-    error: { code, message },
-  };
-}
-
-async function sendError(
-  reply: FastifyReply,
-  statusCode: number,
-  code: string,
-  message: string,
-): Promise<void> {
-  await reply.code(statusCode).send(createErrorResponse(code, message));
 }
 
 export const infoRoutes: FastifyPluginAsync = async (fastify) => {

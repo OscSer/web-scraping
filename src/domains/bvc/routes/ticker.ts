@@ -1,30 +1,12 @@
-import { FastifyPluginAsync, FastifyReply } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { triiClient } from "../services/trii-client.js";
 import { tradingViewClient } from "../services/tradingview-client.js";
 import { TickerData } from "../types/ticker.js";
 import { ApiResponse } from "../../../shared/types/api.js";
+import { sendError } from "../../../shared/utils/api-helpers.js";
 
 interface TickerParams {
   ticker: string;
-}
-
-function createErrorResponse(
-  code: string,
-  message: string,
-): ApiResponse<never> {
-  return {
-    success: false,
-    error: { code, message },
-  };
-}
-
-async function sendError(
-  reply: FastifyReply,
-  statusCode: number,
-  code: string,
-  message: string,
-): Promise<void> {
-  await reply.code(statusCode).send(createErrorResponse(code, message));
 }
 
 function normalizeTicker(raw: string): string | null {

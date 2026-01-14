@@ -15,7 +15,8 @@
   "dependencies": {
     "@upstash/redis": "^1.36.1",
     "fastify": "^4.28.1",
-    "p-limit": "^7.2.0"
+    "p-limit": "^7.2.0",
+    "pino": "^9.6.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
