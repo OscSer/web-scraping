@@ -14,7 +14,7 @@ const steamGameDataCache = createCache<GameData>(STEAM_GAME_DATA_CACHE_TTL_MS);
 
 class SteamUnifiedApiClient {
   async getGameData(appId: string): Promise<GameData> {
-    const cacheKey = `steam-game-data-${appId}`;
+    const cacheKey = `steam:${appId}`;
 
     const result = await steamGameDataCache.getOrFetch(cacheKey, async () => {
       const [nameResult, scoreResult] = await Promise.allSettled([

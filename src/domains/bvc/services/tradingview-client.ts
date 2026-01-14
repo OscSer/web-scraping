@@ -25,7 +25,7 @@ class TradingViewClient {
     const normalizedTicker = normalizeTicker(ticker);
     if (!normalizedTicker) return null;
 
-    const cacheKey = normalizedTicker.toUpperCase();
+    const cacheKey = `stock:${normalizedTicker}`;
 
     try {
       const price = await tradingViewCache.getOrFetch(cacheKey, async () => {

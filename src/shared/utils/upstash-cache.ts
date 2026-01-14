@@ -26,7 +26,7 @@ export class UpstashCache<T> implements Cache<T> {
   private redis: Redis;
   private pendingRequests = new Map<string, Promise<T>>();
   private readonly ttlSeconds: number;
-  private readonly keyPrefix = "web-scraping:";
+  private readonly keyPrefix = "ws:";
 
   constructor(ttlMs: number) {
     this.redis = getRedisClient();

@@ -61,7 +61,7 @@ class TriiClient {
     const normalizedTicker = normalizeTicker(ticker);
     if (!normalizedTicker) return null;
 
-    const priceMap = await triiCache.getOrFetch("stock-list", async () => {
+    const priceMap = await triiCache.getOrFetch("stocks", async () => {
       const response = await globalRateLimiter(() =>
         fetch(TRII_STOCK_LIST_URL, {
           headers: {
