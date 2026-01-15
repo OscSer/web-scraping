@@ -37,7 +37,7 @@
     "*.ts": [
       "eslint --fix",
       "prettier --write",
-      "tsc --noEmit"
+      "bash -c 'tsc --noEmit'"
     ]
   }
 }

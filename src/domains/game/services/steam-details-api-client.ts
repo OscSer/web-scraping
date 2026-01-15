@@ -33,14 +33,14 @@ export class SteamDetailsApiClient {
             Accept: "application/json",
             "Accept-Language": "en-US,en;q=0.5",
           },
-        }),
+        })
       );
 
       if (!response.ok) {
         throw new SteamFetchError(
           `Failed to fetch Steam app details for app ${appId}`,
           response.status,
-          response.statusText,
+          response.statusText
         );
       }
 
@@ -49,20 +49,20 @@ export class SteamDetailsApiClient {
       const appData = data[appId];
       if (!appData) {
         throw new SteamParseError(
-          `Steam API returned no data for app ${appId}`,
+          `Steam API returned no data for app ${appId}`
         );
       }
 
       if (!appData.success || !appData.data) {
         throw new SteamParseError(
-          `Steam API returned success=false for app ${appId}`,
+          `Steam API returned success=false for app ${appId}`
         );
       }
 
       const gameName = appData.data.name;
       if (!gameName || typeof gameName !== "string") {
         throw new SteamParseError(
-          `Steam API returned invalid name for app ${appId}`,
+          `Steam API returned invalid name for app ${appId}`
         );
       }
 
@@ -73,7 +73,7 @@ export class SteamDetailsApiClient {
         error,
         appId,
         "game name from Steam Details API",
-        GAME_NAME_PLACEHOLDER,
+        GAME_NAME_PLACEHOLDER
       );
     }
   }

@@ -73,12 +73,12 @@ export class TriiClient {
             "user-agent": USER_AGENT,
             accept: "text/html,application/xhtml+xml",
           },
-        }),
+        })
       );
 
       if (!response.ok) {
         throw new Error(
-          `TRII_FETCH_ERROR: ${response.status} ${response.statusText}`,
+          `TRII_FETCH_ERROR: ${response.status} ${response.statusText}`
         );
       }
 

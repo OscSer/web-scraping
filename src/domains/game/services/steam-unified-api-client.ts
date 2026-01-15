@@ -20,7 +20,7 @@ class SteamUnifiedApiClient {
     this.logger = logger;
     this.steamGameDataCache = createCache<GameData>(
       STEAM_GAME_DATA_CACHE_TTL_MS,
-      logger,
+      logger
     );
     this.steamDetailsApiClient = new SteamDetailsApiClient(logger);
     this.steamReviewsApiClient = new SteamReviewsApiClient(logger);
@@ -43,7 +43,7 @@ class SteamUnifiedApiClient {
         if (nameResult.status === "rejected") {
           this.logger.warn(
             { err: nameResult.reason, appId },
-            "Failed to fetch game name, using fallback",
+            "Failed to fetch game name, using fallback"
           );
         }
 
@@ -52,12 +52,12 @@ class SteamUnifiedApiClient {
         if (scoreResult.status === "rejected") {
           this.logger.warn(
             { err: scoreResult.reason, appId },
-            "Failed to fetch score, using fallback value 0",
+            "Failed to fetch score, using fallback value 0"
           );
         } else if (scoreResult.value === null) {
           this.logger.warn(
             { appId },
-            "Score returned null, using fallback value 0",
+            "Score returned null, using fallback value 0"
           );
         } else {
           finalScore = scoreResult.value.score;
@@ -67,7 +67,7 @@ class SteamUnifiedApiClient {
           name: gameName,
           score: finalScore,
         };
-      },
+      }
     );
 
     return result;
