@@ -1,15 +1,12 @@
 # AGENTS.md - Development Guidelines
 
-## Build & Test Commands
+## Build & Commands
 
 ```bash
 npm run dev          # Start dev server with hot reload
-npm run build        # Compile TypeScript to dist/
-npm run lint         # Check code style (eslint src/**/*.ts)
-npm run format       # Auto-format code (prettier --write src/**/*.ts)
-npx tsc --noEmit     # Type check only
-npx eslint src/file.ts --fix
-npx prettier --write src/file.ts
+npm run build        # Compile TypeScript
+npm run lint         # Check code style (eslint)
+npm run format       # Auto-format code (prettier)
 ```
 
 ## Code Style

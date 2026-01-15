@@ -21,7 +21,7 @@ npm run dev
 
 ## Tech Stack
 
-- **Node.js** (>=22.0.0) + **TypeScript**
-- **Fastify** - Web framework
-- **Upstash Redis** - Cache layer
-- **p-limit** - Concurrency control
+- **Node.js** (>=22.0.0)
+- **TypeScript**
+- **Fastify**
+- **Upstash Redis**
