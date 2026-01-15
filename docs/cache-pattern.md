@@ -2,14 +2,16 @@
 
 ## Pattern
 
-- Interface-based abstraction: `Cache<T>`
-- Factory function: `createCache()` selects implementation based on config
-- Multiple implementations: `UpstashCache` (production), `NoOpCache` (disabled)
+- Interface-based abstraction
+- Factory function selects implementation based on config
+- Multiple implementations: production and disabled modes
 - Request coalescing prevents stampeding herd problem
 
 ## Architecture
 
-### Interface (`src/shared/types/cache.ts`)
+### Interface
+
+Located in shared types directory.
 
 ```
 get(key): Promise<T | null>
@@ -19,52 +21,55 @@ getOrFetch(key, fetcher): Promise<T>
 
 Small, focused interface with single responsibility.
 
-### Factory (`src/shared/utils/cache-factory.ts`)
+### Factory
 
-- `createCache<T>(ttlMs, logger): Cache<T>`
-- Returns `NoOpCache` if `config.cache.isDisabled`
-- Returns `UpstashCache` if cache enabled
-- Creates child logger with `[Cache]` prefix for visibility
+Search for the factory function in shared utils.
 
-### NoOpCache (Null Object Pattern)
+- Returns no-op implementation if caching is disabled
+- Returns production cache implementation if enabled
+- Creates child logger with cache-specific prefix for visibility
 
-- Implements `Cache<T>` interface
-- `get()` always returns `null`
-- `set()` no-op (no-operation)
+### No-Op Implementation (Null Object Pattern)
+
+- Implements cache interface
+- `get()` always returns null
+- `set()` no-operation
 - `getOrFetch()` skips cache, calls fetcher directly
 - Eliminates null checks from consumers
 
-### UpstashCache (`src/shared/utils/upstash-cache.ts`)
+### Production Cache Implementation
 
-- Singleton Redis client: `getRedisClient()` instantiates once
-- Key prefixing: `"ws:"` namespace isolation
-- Request coalescing: `Map<key, Promise<T>>` prevents duplicate fetches
-- Graceful degradation: errors logged but not thrown on `get()`, `set()`
-- `finally` block cleans up pending requests
+Located in shared utils.
+
+- Singleton Redis client instantiated once
+- Key prefixing for namespace isolation
+- Request coalescing: tracks in-flight requests in a map to prevent duplicate fetches
+- Graceful degradation: errors logged but not thrown on get/set operations
+- Cleanup of pending requests via finally block
 
 ## Request Coalescing
 
 Problem: Multiple requests for same key during cache miss cause duplicate external calls.
 
-Solution: Track in-flight requests in `pendingRequests` map:
+Solution: Track in-flight requests in a map:
 
 - Cache miss detected
 - Check if key already in pending map
 - If yes, return existing promise (await same fetch)
 - If no, start fetch, store promise, clean up on completion
 
-See: `src/shared/utils/upstash-cache.ts:76-98`
+Search for the pending requests map tracking logic in production cache implementation.
 
 ## Usage Pattern
 
 Services receive cache via constructor injection:
 
 ```typescript
-class SomeClient {
+class ApiClient {
   private cache;
 
-  constructor(logger: FastifyBaseLogger) {
-    this.cache = createCache<DataType>(TTL_MS, logger);
+  constructor(logger) {
+    this.cache = cacheFacory<DataType>(TTL_MS, logger);
   }
 
   async getData(key: string): Promise<DataType> {
@@ -75,9 +80,7 @@ class SomeClient {
 
 ## Consumer Examples
 
-- `src/domains/game/services/steam-unified-api-client.ts:21-24`
-- `src/domains/bvc/services/trii-client.ts:62`
-- `src/domains/bvc/services/tradingview-client.ts:24-27`
+Search for cache instantiation pattern in service implementations across domains. Look for the pattern where services initialize cache with TTL and logger in their constructors.
 
 ## Benefits
 
@@ -86,7 +89,7 @@ class SomeClient {
 - **Singleton pattern**: Redis client reused, not recreated
 - **Stampede protection**: Request coalescing prevents N+1 external calls
 - **Fault-tolerant**: Cache errors don't crash the service
-- **Transparent**: Caller doesn't know NoOpCache vs UpstashCache
+- **Transparent**: Caller doesn't know no-op vs production implementation
 
 ## Anti-patterns Avoided
 

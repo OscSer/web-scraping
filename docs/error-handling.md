@@ -5,46 +5,52 @@
 - Custom error types with domain context
 - Centralized error handler function
 - Fallback cascade: primary source → secondary source → error response
-- `Promise.allSettled` for fault-tolerant parallel operations
+- Parallel operations use try-all-gather approach for fault tolerance
 
 ## Strategy Layers
 
 ### 1. Custom Error Types
 
-- Typed errors with domain-specific context (e.g., HTTP status, message)
-- See: `src/domains/game/types/errors.ts`
-  - `SteamFetchError`: status code + text
-  - `SteamParseError`: invalid response structure
+Located in domain types directories:
+
+- Typed errors with domain-specific context
+- Includes relevant metadata (HTTP status, message, response structure info)
+- Enables different handling strategies based on error type
 
 ### 2. Centralized Error Handler
 
-- `handleSteamError<T>(..., fallbackValue: T): T`
-- Logs contextually (warn vs. error based on error type)
+Located in domain utils:
+
+- Handler function accepts error and fallback value
+- Logs contextually based on error type (warn vs. error)
 - Always returns fallback value, never throws
-- See: `src/domains/game/utils/steam-error-handler.ts`
+- Converts exceptions into recoverable states
 
 ### 3. Service Layer
 
+Search for catch blocks in service implementations:
+
 - Catch typed errors in service methods
-- Call `handleSteamError` to convert to fallback
-- Return `null` or default value, not error
-- Examples:
-  - `src/domains/game/services/steam-details-api-client.ts:69-78`
-  - `src/domains/game/services/steam-reviews-api-client.ts:89-97`
+- Call error handler function to convert to fallback
+- Return null or default value, not error
 
 ### 4. Route Layer
 
+Search for try-catch patterns in route handlers:
+
 - Try-catch cascade with manual fallback attempt
-- Primary source fails → log + try secondary source
-- Both fail → return 502 error response
-- See: `src/domains/bvc/routes/ticker.ts:35-95`
+- Primary source fails → log and attempt secondary source
+- Both fail → return appropriate error response
+- Maintains service availability by graceful degradation
 
 ### 5. Parallel Operations
 
-- `Promise.allSettled` for independent async operations
+Search for parallel operation patterns in service implementations:
+
+- Promise.all-settled approach for independent async operations
 - Extract results and handle rejections individually
 - Warn on specific failures, continue with fallback values
-- See: `src/domains/game/services/steam-unified-api-client.ts:35-65`
+- Prevents single failure from blocking all operations
 
 ## Benefits
 
