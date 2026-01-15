@@ -5,7 +5,9 @@ import { bvcDomain } from "./domains/bvc/index.js";
 import { gameDomain } from "./domains/game/index.js";
 
 const fastify = Fastify({
-  logger: true,
+  logger: {
+    level: process.env.LOG_LEVEL ?? "info",
+  },
 });
 
 function hasValidApiKeyHeader(rawHeaderValue: unknown): boolean {
