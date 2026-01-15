@@ -17,7 +17,9 @@ FROM node:22-slim
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+
+# Skip scripts to prevent husky prepare hook from running
+RUN npm ci --omit=dev --ignore-scripts
 
 COPY --from=builder /app/dist ./dist
 
