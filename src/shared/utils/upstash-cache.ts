@@ -9,7 +9,7 @@ function getRedisClient(): Redis {
   if (!redisClient) {
     if (!config.cache.upstash.url || !config.cache.upstash.token) {
       throw new Error(
-        "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set"
+        "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set",
       );
     }
 

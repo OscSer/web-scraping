@@ -15,7 +15,7 @@ interface InfoRoutesOptions {
 
 export const infoRoutes: FastifyPluginAsync<InfoRoutesOptions> = async (
   fastify,
-  opts
+  opts,
 ) => {
   const { gameInfoService } = opts;
 
@@ -35,7 +35,7 @@ export const infoRoutes: FastifyPluginAsync<InfoRoutesOptions> = async (
           reply,
           400,
           "INVALID_URL",
-          "Invalid Steam URL or App ID"
+          "Invalid Steam URL or App ID",
         );
         return;
       }
@@ -58,9 +58,9 @@ export const infoRoutes: FastifyPluginAsync<InfoRoutesOptions> = async (
           reply,
           502,
           "SCRAPING_ERROR",
-          "Unable to fetch game info"
+          "Unable to fetch game info",
         );
       }
-    }
+    },
   );
 };

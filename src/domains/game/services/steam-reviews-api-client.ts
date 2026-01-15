@@ -52,14 +52,14 @@ export class SteamReviewsApiClient {
             Accept: "application/json",
             "Accept-Language": "en-US,en;q=0.5",
           },
-        })
+        }),
       );
 
       if (!response.ok) {
         throw new SteamFetchError(
           `Failed to fetch Steam reviews API for app ${appId}`,
           response.status,
-          response.statusText
+          response.statusText,
         );
       }
 
@@ -67,7 +67,7 @@ export class SteamReviewsApiClient {
 
       if (data.success !== 1) {
         throw new SteamParseError(
-          `Steam API returned success=${data.success} for app ${appId}`
+          `Steam API returned success=${data.success} for app ${appId}`,
         );
       }
 
@@ -75,7 +75,7 @@ export class SteamReviewsApiClient {
 
       if (!score) {
         throw new SteamParseError(
-          `Failed to calculate score from Steam API data for app ${appId}`
+          `Failed to calculate score from Steam API data for app ${appId}`,
         );
       }
 
@@ -92,7 +92,7 @@ export class SteamReviewsApiClient {
         error,
         appId,
         "Steam Reviews API client",
-        null
+        null,
       );
     }
   }

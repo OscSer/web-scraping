@@ -6,12 +6,12 @@ export function handleSteamError<T>(
   error: unknown,
   appId: string,
   context: string,
-  fallbackValue: T
+  fallbackValue: T,
 ): T {
   if (error instanceof SteamFetchError || error instanceof SteamParseError) {
     logger.warn(
       { err: error, appId },
-      `Failed to fetch ${context}, using fallback`
+      `Failed to fetch ${context}, using fallback`,
     );
   } else {
     logger.error({ err: error, appId }, `Unexpected error in ${context}`);

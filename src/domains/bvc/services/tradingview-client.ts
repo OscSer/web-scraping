@@ -23,12 +23,12 @@ export class TradingViewClient {
   constructor(logger: FastifyBaseLogger) {
     this.tradingViewCache = createCache<number>(
       TRADINGVIEW_CACHE_TTL_MS,
-      logger
+      logger,
     );
   }
 
   async getPriceByTicker(
-    ticker: string
+    ticker: string,
   ): Promise<TradingViewTickerResult | null> {
     const normalizedTicker = normalizeTicker(ticker);
     if (!normalizedTicker) return null;
@@ -53,12 +53,12 @@ export class TradingViewClient {
                 origin: "https://es.tradingview.com",
                 referer: "https://es.tradingview.com/",
               },
-            })
+            }),
           );
 
           if (!response.ok) {
             throw new Error(
-              `TRADINGVIEW_FETCH_ERROR: ${response.status} ${response.statusText}`
+              `TRADINGVIEW_FETCH_ERROR: ${response.status} ${response.statusText}`,
             );
           }
 
@@ -69,7 +69,7 @@ export class TradingViewClient {
           }
 
           throw new Error("TICKER_NOT_FOUND");
-        }
+        },
       );
 
       return {

@@ -2,7 +2,7 @@ export class SteamFetchError extends Error {
   constructor(
     message: string,
     public readonly statusCode: number,
-    public readonly statusText: string
+    public readonly statusText: string,
   ) {
     super(message);
     this.name = "SteamFetchError";

@@ -17,7 +17,7 @@ interface TickerRoutesOptions {
 
 export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
   fastify,
-  opts
+  opts,
 ) => {
   const { triiClient, tradingViewClient } = opts;
 
@@ -39,7 +39,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
         if (result === null) {
           fastify.log.info(
             { ticker: normalizedTicker },
-            "Ticker not found in Trii, trying TradingView"
+            "Ticker not found in Trii, trying TradingView",
           );
           result = await tradingViewClient.getPriceByTicker(normalizedTicker);
         }
@@ -49,7 +49,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
             reply,
             404,
             "TICKER_NOT_FOUND",
-            `Ticker "${normalizedTicker}" not found`
+            `Ticker "${normalizedTicker}" not found`,
           );
           return;
         }
@@ -65,7 +65,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
 
         fastify.log.info(
           { ticker: normalizedTicker },
-          "Trii failed, trying TradingView as fallback"
+          "Trii failed, trying TradingView as fallback",
         );
 
         try {
@@ -82,7 +82,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
         } catch (fallbackError) {
           fastify.log.error(
             { err: fallbackError },
-            "TradingView fallback also failed"
+            "TradingView fallback also failed",
           );
         }
 
@@ -90,9 +90,9 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (
           reply,
           502,
           "FETCH_ERROR",
-          "Error fetching ticker price"
+          "Error fetching ticker price",
         );
       }
-    }
+    },
   );
 };
