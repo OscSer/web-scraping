@@ -1,6 +1,5 @@
 import type { FastifyBaseLogger } from "fastify";
 import { createCache } from "../../../shared/utils/cache-factory.js";
-import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
 
@@ -67,14 +66,12 @@ export class TriiClient {
     if (!normalizedTicker) return null;
 
     const priceMap = await this.triiCache.getOrFetch("stocks", async () => {
-      const response = await globalRateLimiter(() =>
-        fetch(TRII_STOCK_LIST_URL, {
-          headers: {
-            "user-agent": USER_AGENT,
-            accept: "text/html,application/xhtml+xml",
-          },
-        }),
-      );
+      const response = await fetch(TRII_STOCK_LIST_URL, {
+        headers: {
+          "user-agent": USER_AGENT,
+          accept: "text/html,application/xhtml+xml",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(

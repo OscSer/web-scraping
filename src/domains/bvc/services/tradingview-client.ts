@@ -1,6 +1,5 @@
 import type { FastifyBaseLogger } from "fastify";
 import { createCache } from "../../../shared/utils/cache-factory.js";
-import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
 
@@ -45,16 +44,14 @@ export class TradingViewClient {
           url.searchParams.set("fields", "close");
           url.searchParams.set("no_404", "true");
 
-          const response = await globalRateLimiter(() =>
-            fetch(url.toString(), {
-              headers: {
-                "user-agent": USER_AGENT,
-                accept: "application/json",
-                origin: "https://es.tradingview.com",
-                referer: "https://es.tradingview.com/",
-              },
-            }),
-          );
+          const response = await fetch(url.toString(), {
+            headers: {
+              "user-agent": USER_AGENT,
+              accept: "application/json",
+              origin: "https://es.tradingview.com",
+              referer: "https://es.tradingview.com/",
+            },
+          });
 
           if (!response.ok) {
             throw new Error(

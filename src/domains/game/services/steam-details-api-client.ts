@@ -1,8 +1,11 @@
 import type { FastifyBaseLogger } from "fastify";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import { globalRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { USER_AGENT } from "../../../shared/config/index.js";
 import { handleSteamError } from "../utils/steam-error-handler.js";
+import {
+  createRateLimiter,
+  type RateLimiter,
+} from "../../../shared/utils/global-rate-limiter.js";
 
 const GAME_NAME_PLACEHOLDER = "Unknown Game";
 
@@ -17,16 +20,18 @@ interface SteamAppDetailsResponse {
 
 export class SteamDetailsApiClient {
   private logger: FastifyBaseLogger;
+  private rateLimiter: RateLimiter;
 
   constructor(logger: FastifyBaseLogger) {
     this.logger = logger;
+    this.rateLimiter = createRateLimiter();
   }
 
   async getGameNameByAppId(appId: string): Promise<string> {
     try {
       const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
 
-      const response = await globalRateLimiter(() =>
+      const response = await this.rateLimiter(() =>
         fetch(url, {
           headers: {
             "User-Agent": USER_AGENT,

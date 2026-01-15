@@ -1,6 +1,9 @@
 import pLimit from "p-limit";
 
-// Global concurrency limit for external HTTP requests
 const MAX_CONCURRENT_REQUESTS = 10;
 
-export const globalRateLimiter = pLimit(MAX_CONCURRENT_REQUESTS);
+export type RateLimiter = <T>(fn: () => Promise<T>) => Promise<T>;
+
+export function createRateLimiter(): RateLimiter {
+  return pLimit(MAX_CONCURRENT_REQUESTS);
+}
