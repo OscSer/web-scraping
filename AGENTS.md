@@ -28,12 +28,15 @@ curl "http://localhost:3000/game/info?url=https%3A%2F%2Fstore.steampowered.com%2
 
 ## Logs
 
-```bash
-# Cloud Run (revisions)
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\"" --project "web-scraping-484120" --limit 100
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\" AND severity>=ERROR" --project "web-scraping-484120" --limit 100
+Project ID: `web-scraping-484120`
+Service name: `web-scraping`
 
-# Cloud Build (builds)
+```bash
+# Cloud Run
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\"" --project "web-scraping-484120"
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\" AND severity>=ERROR" --project "web-scraping-484120"
+
+# Cloud Build
 gcloud logging read "resource.type=build" --project "web-scraping-484120" --limit 50
 ```
 
