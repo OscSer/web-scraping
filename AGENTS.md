@@ -2,6 +2,13 @@
 
 This project implements a web scraping service with a domain-driven architecture.
 
+## Project Info
+
+- Runtime: Node.js >=22.0.0
+- Framework: Fastify
+- Cache: Upstash Redis
+- Architecture: Domain-driven
+
 ## Commands
 
 ```bash
@@ -13,14 +20,22 @@ npm run format       # Auto-format code (prettier)
 
 ## Check Functionality
 
-Run `npm run dev` in background and check the routes via `curl`
+Run `npm run dev` in background and check the routes via `curl`:
 
-## Project Info
+```bash
+curl "http://localhost:3000/game/info?url=https%3A%2F%2Fstore.steampowered.com%2Fapp%2F47780%2FDead_Space__2%2F"
+```
 
-- Runtime: Node.js >=22.0.0
-- Framework: Fastify
-- Cache: Upstash Redis
-- Architecture: Domain-driven
+## Logs
+
+```bash
+# Cloud Run (revisions)
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\"" --project "web-scraping-484120" --limit 100
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"web-scraping\" AND severity>=ERROR" --project "web-scraping-484120" --limit 100
+
+# Cloud Build (builds)
+gcloud logging read "resource.type=build" --project "web-scraping-484120" --limit 50
+```
 
 ## Architecture & Patterns
 
