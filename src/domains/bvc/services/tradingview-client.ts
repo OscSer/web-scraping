@@ -1,7 +1,11 @@
 import type { FastifyBaseLogger } from "fastify";
 import { createCache } from "../../../shared/utils/cache-factory.js";
+import {
+  buildFetchHeaders,
+  fetchWithTimeout,
+} from "../../../shared/utils/api-helpers.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
-import { USER_AGENT } from "../../../shared/config/index.js";
+import { BvcFetchError, BvcParseError } from "../types/errors.js";
 
 const TRADINGVIEW_API_URL = "https://scanner.tradingview.com/symbol";
 const TRADINGVIEW_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
@@ -44,18 +48,19 @@ export class TradingViewClient {
           url.searchParams.set("fields", "close");
           url.searchParams.set("no_404", "true");
 
-          const response = await fetch(url.toString(), {
-            headers: {
-              "user-agent": USER_AGENT,
+          const response = await fetchWithTimeout(url.toString(), {
+            headers: buildFetchHeaders({
               accept: "application/json",
               origin: "https://es.tradingview.com",
               referer: "https://es.tradingview.com/",
-            },
+            }),
           });
 
           if (!response.ok) {
-            throw new Error(
-              `TRADINGVIEW_FETCH_ERROR: ${response.status} ${response.statusText}`,
+            throw new BvcFetchError(
+              "Failed to fetch TradingView ticker",
+              response.status,
+              response.statusText,
             );
           }
 
@@ -65,7 +70,7 @@ export class TradingViewClient {
             return data.close;
           }
 
-          throw new Error("TICKER_NOT_FOUND");
+          throw new BvcParseError("TradingView did not return a valid close");
         },
       );
 
@@ -75,10 +80,7 @@ export class TradingViewClient {
         source: "tradingview",
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("TRADINGVIEW_FETCH_ERROR")
-      ) {
+      if (error instanceof BvcFetchError || error instanceof BvcParseError) {
         throw error;
       }
       return null;

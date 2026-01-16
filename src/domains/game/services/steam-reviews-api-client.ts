@@ -1,7 +1,10 @@
 import type { FastifyBaseLogger } from "fastify";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import { USER_AGENT } from "../../../shared/config/index.js";
 import { handleSteamError } from "../utils/steam-error-handler.js";
+import {
+  buildFetchHeaders,
+  fetchWithTimeout,
+} from "../../../shared/utils/api-helpers.js";
 import {
   createRateLimiter,
   type RateLimiter,
@@ -43,7 +46,7 @@ export class SteamReviewsApiClient {
 
   constructor(logger: FastifyBaseLogger) {
     this.logger = logger;
-    this.rateLimiter = createRateLimiter();
+    this.rateLimiter = createRateLimiter(10);
   }
 
   async getScoreByAppId(appId: string): Promise<SteamScore | null> {
@@ -51,12 +54,10 @@ export class SteamReviewsApiClient {
       const url = `https://store.steampowered.com/appreviews/${appId}?json=1&filter=all&language=all&purchase_type=all&num_per_page=0`;
 
       const response = await this.rateLimiter(() =>
-        fetch(url, {
-          headers: {
-            "User-Agent": USER_AGENT,
+        fetchWithTimeout(url, {
+          headers: buildFetchHeaders({
             Accept: "application/json",
-            "Accept-Language": "en-US,en;q=0.5",
-          },
+          }),
         }),
       );
 

@@ -1,13 +1,13 @@
 import type { FastifyBaseLogger } from "fastify";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import { USER_AGENT } from "../../../shared/config/index.js";
-import { handleSteamError } from "../utils/steam-error-handler.js";
+import {
+  buildFetchHeaders,
+  fetchWithTimeout,
+} from "../../../shared/utils/api-helpers.js";
 import {
   createRateLimiter,
   type RateLimiter,
 } from "../../../shared/utils/global-rate-limiter.js";
-
-const GAME_NAME_PLACEHOLDER = "Unknown Game";
 
 interface SteamAppDetailsResponse {
   [appId: string]: {
@@ -19,67 +19,52 @@ interface SteamAppDetailsResponse {
 }
 
 export class SteamDetailsApiClient {
-  private logger: FastifyBaseLogger;
   private rateLimiter: RateLimiter;
 
-  constructor(logger: FastifyBaseLogger) {
-    this.logger = logger;
-    this.rateLimiter = createRateLimiter();
+  constructor(_logger: FastifyBaseLogger) {
+    this.rateLimiter = createRateLimiter(10);
+    void _logger;
   }
 
   async getGameNameByAppId(appId: string): Promise<string> {
-    try {
-      const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
 
-      const response = await this.rateLimiter(() =>
-        fetch(url, {
-          headers: {
-            "User-Agent": USER_AGENT,
-            Accept: "application/json",
-            "Accept-Language": "en-US,en;q=0.5",
-          },
+    const response = await this.rateLimiter(() =>
+      fetchWithTimeout(url, {
+        headers: buildFetchHeaders({
+          Accept: "application/json",
         }),
-      );
+      }),
+    );
 
-      if (!response.ok) {
-        throw new SteamFetchError(
-          `Failed to fetch Steam app details for app ${appId}`,
-          response.status,
-          response.statusText,
-        );
-      }
-
-      const data = (await response.json()) as SteamAppDetailsResponse;
-
-      const appData = data[appId];
-      if (!appData) {
-        throw new SteamParseError(
-          `Steam API returned no data for app ${appId}`,
-        );
-      }
-
-      if (!appData.success || !appData.data) {
-        throw new SteamParseError(
-          `Steam API returned success=false for app ${appId}`,
-        );
-      }
-
-      const gameName = appData.data.name;
-      if (!gameName || typeof gameName !== "string") {
-        throw new SteamParseError(
-          `Steam API returned invalid name for app ${appId}`,
-        );
-      }
-
-      return gameName;
-    } catch (error) {
-      return handleSteamError(
-        this.logger,
-        error,
-        appId,
-        "game name from Steam Details API",
-        GAME_NAME_PLACEHOLDER,
+    if (!response.ok) {
+      throw new SteamFetchError(
+        `Failed to fetch Steam app details for app ${appId}`,
+        response.status,
+        response.statusText,
       );
     }
+
+    const data = (await response.json()) as SteamAppDetailsResponse;
+
+    const appData = data[appId];
+    if (!appData) {
+      throw new SteamParseError(`Steam API returned no data for app ${appId}`);
+    }
+
+    if (!appData.success || !appData.data) {
+      throw new SteamParseError(
+        `Steam API returned success=false for app ${appId}`,
+      );
+    }
+
+    const gameName = appData.data.name;
+    if (!gameName || typeof gameName !== "string") {
+      throw new SteamParseError(
+        `Steam API returned invalid name for app ${appId}`,
+      );
+    }
+
+    return gameName;
   }
 }

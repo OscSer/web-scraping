@@ -11,13 +11,11 @@ interface GameData {
 }
 
 class SteamUnifiedApiClient {
-  private logger: FastifyBaseLogger;
   private steamGameDataCache;
   private steamDetailsApiClient: SteamDetailsApiClient;
   private steamReviewsApiClient: SteamReviewsApiClient;
 
   constructor(logger: FastifyBaseLogger) {
-    this.logger = logger;
     this.steamGameDataCache = createCache<GameData>(
       STEAM_GAME_DATA_CACHE_TTL_MS,
       logger,
@@ -32,40 +30,22 @@ class SteamUnifiedApiClient {
     const result = await this.steamGameDataCache.getOrFetch(
       cacheKey,
       async () => {
-        const [nameResult, scoreResult] = await Promise.allSettled([
+        const [gameName, score] = await Promise.all([
           this.steamDetailsApiClient.getGameNameByAppId(appId),
           this.steamReviewsApiClient.getScoreByAppId(appId),
         ]);
 
-        const gameName =
-          nameResult.status === "fulfilled" ? nameResult.value : "Unknown Name";
-
-        if (nameResult.status === "rejected") {
-          this.logger.warn(
-            { err: nameResult.reason, appId },
-            "Failed to fetch game name, using fallback",
-          );
+        if (score === null) {
+          throw new Error(`Steam score is unavailable for app ${appId}`);
         }
 
-        let finalScore = 0;
-
-        if (scoreResult.status === "rejected") {
-          this.logger.warn(
-            { err: scoreResult.reason, appId },
-            "Failed to fetch score, using fallback value 0",
-          );
-        } else if (scoreResult.value === null) {
-          this.logger.warn(
-            { appId },
-            "Score returned null, using fallback value 0",
-          );
-        } else {
-          finalScore = scoreResult.value.score;
+        if (!Number.isFinite(score.score)) {
+          throw new Error(`Steam score is invalid for app ${appId}`);
         }
 
         return {
           name: gameName,
-          score: finalScore,
+          score: score.score,
         };
       },
     );

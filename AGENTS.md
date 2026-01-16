@@ -11,6 +11,10 @@ npm run lint         # Check code style (eslint)
 npm run format       # Auto-format code (prettier)
 ```
 
+## Check Functionality
+
+Run `npm run dev` in background and check the routes via `curl`
+
 ## Project Info
 
 - Runtime: Node.js >=22.0.0
