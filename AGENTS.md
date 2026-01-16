@@ -1,6 +1,8 @@
-# AGENTS.md - Development Guidelines
+# AGENTS.md
 
-## Build & Commands
+This project implements a web scraping service with a domain-driven architecture.
+
+## Commands
 
 ```bash
 npm run dev          # Start dev server with hot reload
@@ -8,34 +10,6 @@ npm run build        # Compile TypeScript
 npm run lint         # Check code style (eslint)
 npm run format       # Auto-format code (prettier)
 ```
-
-## Code Style
-
-### Naming
-
-- **camelCase**: functions, variables, methods
-- **PascalCase**: classes, interfaces, types
-- **SCREAMING_SNAKE_CASE**: constants
-
-### File Organization
-
-- src/domains/{domain}/{types,services,routes}/
-- src/shared/{utils,config,types}/
-- Use index.ts for clean exports
-
-### Error Handling
-
-- Guard clauses first: `if (!user) return null;`
-- Type guards: `if (typeof value !== "string") return false;`
-- Async/await + try/catch
-- Use `fastify.log.error()`, `.warn()`, `.info()`
-
-### Key Patterns
-
-- Config: frozen objects with `as const`
-- API responses: `ApiResponse<T>` interface (success, data?, error?)
-- Middleware: Fastify hooks (addHook)
-- Concurrency: p-limit for rate limiting
 
 ## Project Info
 
