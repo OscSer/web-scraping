@@ -1,16 +1,14 @@
-import type { FastifyBaseLogger } from "fastify";
 import { Redis } from "@upstash/redis";
-import { Cache } from "../types/cache.js";
+import type { FastifyBaseLogger } from "fastify";
 import { config } from "../config/index.js";
+import { Cache } from "../types/cache.js";
 
 let redisClient: Redis | null = null;
 
 function getRedisClient(): Redis {
   if (!redisClient) {
     if (!config.cache.upstash.url || !config.cache.upstash.token) {
-      throw new Error(
-        "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set",
-      );
+      throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set");
     }
 
     redisClient = new Redis({

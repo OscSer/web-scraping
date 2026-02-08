@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import Fastify from "fastify";
-import { config } from "./shared/config/index.js";
 import { bvcDomain } from "./domains/bvc/index.js";
 import { gameDomain } from "./domains/game/index.js";
+import { config } from "./shared/config/index.js";
 
 const fastify = Fastify({
   logger: {
@@ -23,9 +23,7 @@ function hasValidApiKeyHeader(rawHeaderValue: unknown): boolean {
 }
 
 if (!config.auth.isDisabled && !config.auth.apiKey) {
-  fastify.log.error(
-    "Missing required env var: API_KEY. Refusing to start (fail-closed)",
-  );
+  fastify.log.error("Missing required env var: API_KEY. Refusing to start (fail-closed)");
   process.exit(1);
 }
 

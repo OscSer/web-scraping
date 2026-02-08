@@ -1,13 +1,7 @@
 import type { FastifyBaseLogger } from "fastify";
+import { buildFetchHeaders, fetchWithTimeout } from "../../../shared/utils/api-helpers.js";
+import { type RateLimiter, createRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
-import {
-  buildFetchHeaders,
-  fetchWithTimeout,
-} from "../../../shared/utils/api-helpers.js";
-import {
-  createRateLimiter,
-  type RateLimiter,
-} from "../../../shared/utils/global-rate-limiter.js";
 
 interface SteamAppDetailsResponse {
   [appId: string]: {
@@ -53,16 +47,12 @@ export class SteamDetailsApiClient {
     }
 
     if (!appData.success || !appData.data) {
-      throw new SteamParseError(
-        `Steam API returned success=false for app ${appId}`,
-      );
+      throw new SteamParseError(`Steam API returned success=false for app ${appId}`);
     }
 
     const gameName = appData.data.name;
     if (!gameName || typeof gameName !== "string") {
-      throw new SteamParseError(
-        `Steam API returned invalid name for app ${appId}`,
-      );
+      throw new SteamParseError(`Steam API returned invalid name for app ${appId}`);
     }
 
     return gameName;

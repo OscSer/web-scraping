@@ -2,10 +2,7 @@ import { FastifyReply } from "fastify";
 import { USER_AGENT } from "../config/index.js";
 import { ApiResponse } from "../types/api.js";
 
-export type HeaderInput =
-  | Record<string, string>
-  | Array<[string, string]>
-  | Headers;
+export type HeaderInput = Record<string, string> | Array<[string, string]> | Headers;
 
 const DEFAULT_FETCH_TIMEOUT_MS = 15000;
 
@@ -25,9 +22,7 @@ function normalizeHeaders(headers?: HeaderInput): Record<string, string> {
   return { ...headers };
 }
 
-export function buildFetchHeaders(
-  overrides?: HeaderInput,
-): Record<string, string> {
+export function buildFetchHeaders(overrides?: HeaderInput): Record<string, string> {
   const baseHeaders = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.5",
@@ -57,10 +52,7 @@ export async function fetchWithTimeout(
   }
 }
 
-export function createErrorResponse(
-  code: string,
-  message: string,
-): ApiResponse<never> {
+export function createErrorResponse(code: string, message: string): ApiResponse<never> {
   return {
     success: false,
     error: { code, message },

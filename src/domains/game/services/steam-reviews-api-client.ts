@@ -1,14 +1,8 @@
 import type { FastifyBaseLogger } from "fastify";
+import { buildFetchHeaders, fetchWithTimeout } from "../../../shared/utils/api-helpers.js";
+import { type RateLimiter, createRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
 import { handleSteamError } from "../utils/steam-error-handler.js";
-import {
-  buildFetchHeaders,
-  fetchWithTimeout,
-} from "../../../shared/utils/api-helpers.js";
-import {
-  createRateLimiter,
-  type RateLimiter,
-} from "../../../shared/utils/global-rate-limiter.js";
 
 interface SteamReviewsResponse {
   success: number;
@@ -72,34 +66,21 @@ export class SteamReviewsApiClient {
       const data = (await response.json()) as SteamReviewsResponse;
 
       if (data.success !== 1) {
-        throw new SteamParseError(
-          `Steam API returned success=${data.success} for app ${appId}`,
-        );
+        throw new SteamParseError(`Steam API returned success=${data.success} for app ${appId}`);
       }
 
       const score = calculateScore(data);
 
       if (!score) {
-        throw new SteamParseError(
-          `Failed to calculate score from Steam API data for app ${appId}`,
-        );
+        throw new SteamParseError(`Failed to calculate score from Steam API data for app ${appId}`);
       }
 
       return score;
     } catch (error) {
-      if (
-        error instanceof SteamFetchError ||
-        error instanceof SteamParseError
-      ) {
+      if (error instanceof SteamFetchError || error instanceof SteamParseError) {
         throw error;
       }
-      return handleSteamError(
-        this.logger,
-        error,
-        appId,
-        "Steam Reviews API client",
-        null,
-      );
+      return handleSteamError(this.logger, error, appId, "Steam Reviews API client", null);
     }
   }
 }
