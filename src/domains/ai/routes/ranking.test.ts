@@ -6,9 +6,8 @@ interface ModelRankingServiceMock {
   getRanking: () => Promise<
     Array<{
       model: string;
-      index: number;
-      agentic: number;
-      coding: number;
+      position: number;
+      relative: number;
     }>
   >;
 }
@@ -34,15 +33,13 @@ describe("rankingRoutes", () => {
       getRanking: vi.fn().mockResolvedValue([
         {
           model: "Model B",
-          index: 64,
-          agentic: 70,
-          coding: 55,
+          position: 1,
+          relative: 100,
         },
         {
           model: "Model A",
-          index: 58,
-          agentic: 60,
-          coding: 55,
+          position: 2,
+          relative: 90.63,
         },
       ]),
     };
@@ -61,15 +58,13 @@ describe("rankingRoutes", () => {
       data: [
         {
           model: "Model B",
-          index: 64,
-          agentic: 70,
-          coding: 55,
+          position: 1,
+          relative: 100,
         },
         {
           model: "Model A",
-          index: 58,
-          agentic: 60,
-          coding: 55,
+          position: 2,
+          relative: 90.63,
         },
       ],
     });

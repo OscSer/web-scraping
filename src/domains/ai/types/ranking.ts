@@ -6,7 +6,6 @@ export interface ArtificialAnalysisModel {
 
 export interface RankedModel {
   model: string;
-  index: number;
-  agentic: number;
-  coding: number;
+  position: number;
+  relative: number;
 }

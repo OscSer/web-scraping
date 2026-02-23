@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ModelRankingService } from "./model-ranking-service.js";
 
 describe("ModelRankingService", () => {
-  it("filters models without both scores and sorts by index descending", async () => {
+  it("filters models without both scores and sorts by score", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         { model: "Model A", agentic: 50, coding: 50 },
@@ -14,8 +14,8 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
 
     await expect(service.getRanking()).resolves.toEqual([
-      { model: "Model B", index: 64, agentic: 80, coding: 40 },
-      { model: "Model A", index: 50, agentic: 50, coding: 50 },
+      { model: "Model B", position: 1, relative: 100 },
+      { model: "Model A", position: 2, relative: 78.13 },
     ]);
   });
 
@@ -34,7 +34,7 @@ describe("ModelRankingService", () => {
     });
   });
 
-  it("deduplicates by model and keeps highest index", async () => {
+  it("deduplicates by model and keeps highest score", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         { model: "Model A", agentic: 90, coding: 40 },
@@ -46,12 +46,12 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
 
     await expect(service.getRanking()).resolves.toEqual([
-      { model: "Model A", index: 70, agentic: 90, coding: 40 },
-      { model: "Model B", index: 64, agentic: 80, coding: 40 },
+      { model: "Model A", position: 1, relative: 100 },
+      { model: "Model B", position: 2, relative: 91.43 },
     ]);
   });
 
-  it("uses agentic and coding tie-breakers during deduplication", async () => {
+  it("uses tie-breakers during deduplication", async () => {
     const tiedRows = [
       { model: "Model X", agentic: 89.5, coding: 50.75 },
       { model: "Model X", agentic: 90, coding: 50 },
@@ -73,9 +73,21 @@ describe("ModelRankingService", () => {
     const modelXA = rankingA.find((entry) => entry.model === "Model X");
     const modelXB = rankingB.find((entry) => entry.model === "Model X");
 
-    expect(modelXA).toEqual({ model: "Model X", index: 74, agentic: 90, coding: 50 });
-    expect(modelXB).toEqual({ model: "Model X", index: 74, agentic: 90, coding: 50 });
+    expect(modelXA).toEqual({ model: "Model X", position: 2, relative: 98.67 });
+    expect(modelXB).toEqual({ model: "Model X", position: 2, relative: 98.67 });
     expect(rankingA).toEqual(rankingB);
+  });
+
+  it("rounds score to two decimals", async () => {
+    const artificialAnalysisClient = {
+      getModels: vi.fn().mockResolvedValue([{ model: "Model A", agentic: 80.123, coding: 40.456 }]),
+    };
+
+    const service = new ModelRankingService(artificialAnalysisClient as never);
+
+    await expect(service.getRanking()).resolves.toEqual([
+      { model: "Model A", position: 1, relative: 100 },
+    ]);
   });
 
   it("limits ranking response to top 25 models", async () => {
@@ -96,7 +108,54 @@ describe("ModelRankingService", () => {
     const ranking = await service.getRanking();
 
     expect(ranking).toHaveLength(25);
-    expect(ranking[0]).toMatchObject({ model: "Model 1", index: 100 });
-    expect(ranking[24]).toMatchObject({ model: "Model 25", index: 76 });
+    expect(ranking[0]).toMatchObject({ model: "Model 1", position: 1, relative: 100 });
+    expect(ranking[24]).toMatchObject({ model: "Model 25", position: 25, relative: 76 });
+  });
+
+  it("returns numeric relative values when top score is zero", async () => {
+    const artificialAnalysisClient = {
+      getModels: vi.fn().mockResolvedValue([
+        { model: "Model A", agentic: 0, coding: 0 },
+        { model: "Model B", agentic: 0, coding: 0 },
+      ]),
+    };
+
+    const service = new ModelRankingService(artificialAnalysisClient as never);
+
+    await expect(service.getRanking()).resolves.toEqual([
+      { model: "Model A", position: 1, relative: 100 },
+      { model: "Model B", position: 2, relative: 100 },
+    ]);
+  });
+
+  it("sets relative to zero for negative scores when top score is zero", async () => {
+    const artificialAnalysisClient = {
+      getModels: vi.fn().mockResolvedValue([
+        { model: "Model A", agentic: 0, coding: 0 },
+        { model: "Model B", agentic: -10, coding: -10 },
+      ]),
+    };
+
+    const service = new ModelRankingService(artificialAnalysisClient as never);
+
+    await expect(service.getRanking()).resolves.toEqual([
+      { model: "Model A", position: 1, relative: 100 },
+      { model: "Model B", position: 2, relative: 0 },
+    ]);
+  });
+
+  it("sorts by unrounded score before relative rounding", async () => {
+    const artificialAnalysisClient = {
+      getModels: vi.fn().mockResolvedValue([
+        { model: "Model A", agentic: 86.004, coding: 86.004 },
+        { model: "Model B", agentic: 86, coding: 86 },
+      ]),
+    };
+
+    const service = new ModelRankingService(artificialAnalysisClient as never);
+    const ranking = await service.getRanking();
+
+    expect(ranking[0]).toMatchObject({ model: "Model A", position: 1, relative: 100 });
+    expect(ranking[1]).toMatchObject({ model: "Model B", position: 2, relative: 100 });
   });
 });

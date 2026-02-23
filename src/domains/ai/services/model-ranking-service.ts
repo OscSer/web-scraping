@@ -7,7 +7,7 @@ const CODING_WEIGHT = 0.4;
 const RANKING_LIMIT = 25;
 
 function roundScore(value: number): number {
-  return Number(value.toFixed(3));
+  return Number(value.toFixed(2));
 }
 
 function hasBothScores(
@@ -16,10 +16,22 @@ function hasBothScores(
   return model.agentic !== null && model.coding !== null;
 }
 
-function compareRankedModels(left: RankedModel, right: RankedModel): number {
-  if (right.index !== left.index) return right.index - left.index;
+interface ScoredModel {
+  model: string;
+  score: number;
+  agentic: number;
+  coding: number;
+}
+
+function compareScoredModels(left: ScoredModel, right: ScoredModel): number {
+  if (right.score !== left.score) return right.score - left.score;
   if (right.agentic !== left.agentic) return right.agentic - left.agentic;
   return right.coding - left.coding;
+}
+
+function toRelativeScore(score: number, topScore: number): number {
+  if (topScore === 0) return score === 0 ? 100 : 0;
+  return roundScore((score / topScore) * 100);
 }
 
 export class ModelRankingService {
@@ -32,33 +44,39 @@ export class ModelRankingService {
   async getRanking(): Promise<RankedModel[]> {
     const models = await this.artificialAnalysisClient.getModels();
 
-    const scoredModels = models.filter(hasBothScores).map((model) => {
-      const index = roundScore(model.agentic * AGENTIC_WEIGHT + model.coding * CODING_WEIGHT);
+    const scoredModels: ScoredModel[] = models.filter(hasBothScores).map((model) => {
+      const score = model.agentic * AGENTIC_WEIGHT + model.coding * CODING_WEIGHT;
 
       return {
         model: model.model,
-        index,
+        score,
         agentic: model.agentic,
         coding: model.coding,
       };
     });
 
-    const bestByModel = new Map<string, RankedModel>();
+    const bestByModel = new Map<string, ScoredModel>();
     for (const candidate of scoredModels) {
       const existing = bestByModel.get(candidate.model);
-      if (!existing || compareRankedModels(candidate, existing) < 0) {
+      if (!existing || compareScoredModels(candidate, existing) < 0) {
         bestByModel.set(candidate.model, candidate);
       }
     }
 
     const rankedModels = Array.from(bestByModel.values())
-      .sort(compareRankedModels)
+      .sort(compareScoredModels)
       .slice(0, RANKING_LIMIT);
 
     if (rankedModels.length === 0) {
       throw new AiParseError("No models with both agentic and coding scores were found");
     }
 
-    return rankedModels;
+    const topScore = rankedModels[0].score;
+
+    return rankedModels.map((entry, index) => ({
+      model: entry.model,
+      position: index + 1,
+      relative: toRelativeScore(entry.score, topScore),
+    }));
   }
 }
