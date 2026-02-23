@@ -1,9 +1,9 @@
-import { timingSafeEqual } from "node:crypto";
 import Fastify from "fastify";
 import { aiDomain } from "./domains/ai/index.js";
 import { bvcDomain } from "./domains/bvc/index.js";
 import { gameDomain } from "./domains/game/index.js";
 import { config } from "./shared/config/index.js";
+import { createApiKeyOnRequestHook } from "./shared/utils/api-key-auth.js";
 
 const fastify = Fastify({
   logger: {
@@ -11,37 +11,12 @@ const fastify = Fastify({
   },
 });
 
-function hasValidApiKeyHeader(rawHeaderValue: unknown): boolean {
-  if (!config.auth.apiKey) return false;
-  if (typeof rawHeaderValue !== "string") return false;
-
-  const apiKeyBuffer = Buffer.from(config.auth.apiKey);
-  const headerBuffer = Buffer.from(rawHeaderValue);
-
-  if (apiKeyBuffer.length !== headerBuffer.length) return false;
-
-  return timingSafeEqual(apiKeyBuffer, headerBuffer);
-}
-
 if (!config.auth.isDisabled && !config.auth.apiKey) {
   fastify.log.error("Missing required env var: API_KEY. Refusing to start (fail-closed)");
   process.exit(1);
 }
 
-fastify.addHook("onRequest", async (request, reply) => {
-  if (config.auth.isDisabled) return;
-
-  const apiKeyHeader = request.headers["x-api-key"];
-  if (hasValidApiKeyHeader(apiKeyHeader)) return;
-
-  await reply.code(401).send({
-    success: false,
-    error: {
-      code: "UNAUTHORIZED",
-      message: "Unauthorized",
-    },
-  });
-});
+fastify.addHook("onRequest", createApiKeyOnRequestHook(config.auth));
 
 fastify.register(bvcDomain);
 fastify.register(gameDomain);
