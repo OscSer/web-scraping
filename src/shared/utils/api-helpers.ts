@@ -1,6 +1,6 @@
 import { FastifyReply } from "fastify";
 import { USER_AGENT } from "../config/index.js";
-import { ApiResponse } from "../types/api.js";
+import { ApiError } from "../types/api.js";
 
 export type HeaderInput = Record<string, string> | Array<[string, string]> | Headers;
 
@@ -52,9 +52,8 @@ export async function fetchWithTimeout(
   }
 }
 
-export function createErrorResponse(code: string, message: string): ApiResponse<never> {
+export function createErrorResponse(code: string, message: string): ApiError {
   return {
-    success: false,
     error: { code, message },
   };
 }

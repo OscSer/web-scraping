@@ -38,7 +38,6 @@ export function createApiKeyOnRequestHook(authConfig: ApiKeyAuthConfig) {
     if (hasValidApiKey(authConfig.apiKey, apiKeyQueryParam)) return;
 
     await reply.code(401).send({
-      success: false,
       error: {
         code: "UNAUTHORIZED",
         message: "Unauthorized",

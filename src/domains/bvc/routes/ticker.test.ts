@@ -39,7 +39,6 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "INVALID_TICKER",
         message: "Ticker is required",
@@ -68,12 +67,9 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      success: true,
-      data: {
-        ticker: "ECOPETROL",
-        price: 1234,
-        source: "trii",
-      },
+      ticker: "ECOPETROL",
+      price: 1234,
+      source: "trii",
     });
     expect(tradingViewClient.getPriceByTicker).not.toHaveBeenCalled();
   });
@@ -97,12 +93,9 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      success: true,
-      data: {
-        ticker: "ECOPETROL",
-        price: 1220,
-        source: "tradingview",
-      },
+      ticker: "ECOPETROL",
+      price: 1220,
+      source: "tradingview",
     });
   });
 
@@ -121,7 +114,6 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "TICKER_NOT_FOUND",
         message: 'Ticker "ecopetrol" not found',
@@ -146,7 +138,6 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(502);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "FETCH_ERROR",
         message: "Error fetching ticker price",
@@ -176,12 +167,9 @@ describe("tickerRoutes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      success: true,
-      data: {
-        ticker: "ECOPETROL",
-        price: 1210,
-        source: "tradingview",
-      },
+      ticker: "ECOPETROL",
+      price: 1210,
+      source: "tradingview",
     });
     expect(tradingViewClient.getPriceByTicker).toHaveBeenCalledTimes(1);
   });

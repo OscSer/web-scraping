@@ -53,21 +53,18 @@ describe("rankingRoutes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      success: true,
-      data: [
-        {
-          model: "Model B",
-          position: 1,
-          relative: 100,
-        },
-        {
-          model: "Model A",
-          position: 2,
-          relative: 90.63,
-        },
-      ],
-    });
+    expect(response.json()).toEqual([
+      {
+        model: "Model B",
+        position: 1,
+        relative: 100,
+      },
+      {
+        model: "Model A",
+        position: 2,
+        relative: 90.63,
+      },
+    ]);
   });
 
   it("returns 502 when ranking service fails", async () => {
@@ -85,7 +82,6 @@ describe("rankingRoutes", () => {
 
     expect(response.statusCode).toBe(502);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "SCRAPING_ERROR",
         message: "Unable to fetch AI ranking",

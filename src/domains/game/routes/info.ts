@@ -1,9 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
-import { ApiResponse } from "../../../shared/types/api.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
 import { GameInfoService } from "../services/game-info-service.js";
 import { extractAppId } from "../services/steam-url-parser.js";
-import { GameInfo } from "../types/game.js";
 
 interface InfoQueryString {
   url: string;
@@ -35,12 +33,7 @@ export const infoRoutes: FastifyPluginAsync<InfoRoutesOptions> = async (fastify,
     try {
       const gameInfo = await gameInfoService.getGameInfoByAppId(appId);
 
-      const response: ApiResponse<GameInfo> = {
-        success: true,
-        data: gameInfo,
-      };
-
-      await reply.code(200).send(response);
+      await reply.code(200).send(gameInfo);
     } catch (error) {
       fastify.log.error({ err: error, appId }, "Error fetching game info");
 

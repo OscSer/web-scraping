@@ -37,7 +37,6 @@ describe("buildFetchHeaders", () => {
 describe("createErrorResponse", () => {
   it("creates a standardized error payload", () => {
     expect(createErrorResponse("INVALID_INPUT", "Invalid input")).toEqual({
-      success: false,
       error: {
         code: "INVALID_INPUT",
         message: "Invalid input",
@@ -55,7 +54,6 @@ describe("sendError", () => {
 
     expect(code).toHaveBeenCalledWith(400);
     expect(send).toHaveBeenCalledWith({
-      success: false,
       error: {
         code: "INVALID_INPUT",
         message: "Invalid input",

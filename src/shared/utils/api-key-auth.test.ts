@@ -101,7 +101,6 @@ describe("api key auth hook", () => {
 
     expect(missingResponse.statusCode).toBe(401);
     expect(missingResponse.json()).toEqual({
-      success: false,
       error: {
         code: "UNAUTHORIZED",
         message: "Unauthorized",

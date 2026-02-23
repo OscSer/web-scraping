@@ -30,7 +30,6 @@ describe("infoRoutes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "INVALID_URL",
         message: "URL parameter is required",
@@ -51,7 +50,6 @@ describe("infoRoutes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "INVALID_URL",
         message: "Invalid Steam URL or App ID",
@@ -78,12 +76,9 @@ describe("infoRoutes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      success: true,
-      data: {
-        name: "Dead Space 2",
-        score: 91.4,
-        source: "steam",
-      },
+      name: "Dead Space 2",
+      score: 91.4,
+      source: "steam",
     });
     expect(gameInfoService.getGameInfoByAppId).toHaveBeenCalledWith("47780");
   });
@@ -103,7 +98,6 @@ describe("infoRoutes", () => {
 
     expect(response.statusCode).toBe(502);
     expect(response.json()).toEqual({
-      success: false,
       error: {
         code: "SCRAPING_ERROR",
         message: "Unable to fetch game info",

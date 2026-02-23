@@ -1,5 +1,4 @@
 import { FastifyPluginAsync } from "fastify";
-import { ApiResponse } from "../../../shared/types/api.js";
 import { sendError } from "../../../shared/utils/api-helpers.js";
 import { normalizeTicker } from "../../../shared/utils/string-helpers.js";
 import { TradingViewClient } from "../services/tradingview-client.js";
@@ -43,12 +42,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (fast
         return;
       }
 
-      const response: ApiResponse<TickerData> = {
-        success: true,
-        data: result,
-      };
-
-      return reply.code(200).send(response);
+      return reply.code(200).send(result);
     } catch (error) {
       fastify.log.error({ err: error }, "Error fetching ticker");
 
@@ -58,11 +52,7 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (fast
         const result = await tradingViewClient.getPriceByTicker(normalizedTicker);
 
         if (result !== null) {
-          const response: ApiResponse<TickerData> = {
-            success: true,
-            data: result,
-          };
-          return reply.code(200).send(response);
+          return reply.code(200).send(result);
         }
       } catch (fallbackError) {
         fastify.log.error({ err: fallbackError }, "TradingView fallback also failed");
