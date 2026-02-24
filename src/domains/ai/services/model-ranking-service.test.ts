@@ -17,14 +17,14 @@ describe("ModelRankingService", () => {
       {
         model: "Model B",
         position: 1,
-        relativeScore: 100,
-        relativePrice: 100,
+        score: 100,
+        price: 100,
       },
       {
         model: "Model A",
         position: 2,
-        relativeScore: 78,
-        relativePrice: 263,
+        score: 89,
+        price: 269,
       },
     ]);
   });
@@ -57,16 +57,16 @@ describe("ModelRankingService", () => {
 
     await expect(service.getRanking()).resolves.toEqual([
       {
-        model: "Model A",
+        model: "Model B",
         position: 1,
-        relativeScore: 100,
-        relativePrice: 100,
+        score: 80,
+        price: 19,
       },
       {
-        model: "Model B",
+        model: "Model A",
         position: 2,
-        relativeScore: 91,
-        relativePrice: 50,
+        score: 100,
+        price: 100,
       },
     ]);
   });
@@ -95,15 +95,15 @@ describe("ModelRankingService", () => {
 
     expect(modelXA).toEqual({
       model: "Model X",
-      position: 2,
-      relativeScore: 99,
-      relativePrice: 61,
+      position: 1,
+      score: 95,
+      price: 22,
     });
     expect(modelXB).toEqual({
       model: "Model X",
-      position: 2,
-      relativeScore: 99,
-      relativePrice: 61,
+      position: 1,
+      score: 95,
+      price: 22,
     });
     expect(rankingA).toEqual(rankingB);
   });
@@ -127,8 +127,8 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 1,
-        relativeScore: 100,
-        relativePrice: 100,
+        score: 100,
+        price: 100,
       },
     ]);
   });
@@ -156,14 +156,14 @@ describe("ModelRankingService", () => {
     expect(ranking[0]).toMatchObject({
       model: "Model 1",
       position: 1,
-      relativeScore: 100,
-      relativePrice: 100,
+      score: 100,
+      price: 100,
     });
     expect(ranking[24]).toMatchObject({
       model: "Model 25",
       position: 25,
-      relativeScore: 76,
-      relativePrice: 100,
+      score: 76,
+      price: 100,
     });
   });
 
@@ -178,8 +178,18 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
 
     await expect(service.getRanking()).resolves.toEqual([
-      { model: "Model A", position: 1, relativeScore: 100, relativePrice: null },
-      { model: "Model B", position: 2, relativeScore: 100, relativePrice: null },
+      {
+        model: "Model A",
+        position: 1,
+        score: 100,
+        price: null,
+      },
+      {
+        model: "Model B",
+        position: 2,
+        score: 100,
+        price: null,
+      },
     ]);
   });
 
@@ -194,8 +204,18 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
 
     await expect(service.getRanking()).resolves.toEqual([
-      { model: "Model A", position: 1, relativeScore: 100, relativePrice: null },
-      { model: "Model B", position: 2, relativeScore: 0, relativePrice: null },
+      {
+        model: "Model A",
+        position: 1,
+        score: 100,
+        price: null,
+      },
+      {
+        model: "Model B",
+        position: 2,
+        score: 0,
+        price: null,
+      },
     ]);
   });
 
@@ -213,14 +233,14 @@ describe("ModelRankingService", () => {
     expect(ranking[0]).toMatchObject({
       model: "Model A",
       position: 1,
-      relativeScore: 100,
-      relativePrice: 100,
+      score: 100,
+      price: 100,
     });
     expect(ranking[1]).toMatchObject({
       model: "Model B",
       position: 2,
-      relativeScore: 100,
-      relativePrice: null,
+      score: 100,
+      price: null,
     });
   });
 
@@ -235,8 +255,18 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
 
     await expect(service.getRanking()).resolves.toEqual([
-      { position: 1, model: "Model A", relativeScore: 100, relativePrice: null },
-      { position: 2, model: "Model B", relativeScore: 90, relativePrice: null },
+      {
+        model: "Model A",
+        position: 1,
+        score: 100,
+        price: null,
+      },
+      {
+        model: "Model B",
+        position: 2,
+        score: 90,
+        price: null,
+      },
     ]);
   });
 });

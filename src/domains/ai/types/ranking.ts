@@ -9,6 +9,6 @@ export interface ArtificialAnalysisModel {
 export interface RankedModel {
   position: number;
   model: string;
-  relativeScore: number;
-  relativePrice: number | null;
+  score: number;
+  price: number | null;
 }

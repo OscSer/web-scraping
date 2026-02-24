@@ -2,10 +2,12 @@ import { AiParseError } from "../types/errors.js";
 import { ArtificialAnalysisModel, RankedModel } from "../types/ranking.js";
 import { ArtificialAnalysisClient } from "./artificial-analysis-client.js";
 
-const AGENTIC_WEIGHT = 0.6;
-const CODING_WEIGHT = 0.4;
-const INPUT_PRICE_WEIGHT = 0.9;
-const OUTPUT_PRICE_WEIGHT = 0.1;
+const CODING_WEIGHT = 0.5;
+const AGENTIC_WEIGHT = 0.5;
+const INPUT_PRICE_WEIGHT = 0.85;
+const OUTPUT_PRICE_WEIGHT = 0.15;
+const VALUE_SCORE_WEIGHT = 0.8;
+const VALUE_PRICE_WEIGHT = 0.2;
 const RANKING_LIMIT = 25;
 
 function hasBothScores(
@@ -21,6 +23,10 @@ interface ScoredModel {
   coding: number;
   inputPrice: number | null;
   outputPrice: number | null;
+}
+
+interface RankedModelWithValue extends RankedModel {
+  valueScore: number | null;
 }
 
 function compareScoredModels(left: ScoredModel, right: ScoredModel): number {
@@ -72,6 +78,51 @@ function toRelativePrice(
   return Math.round(compositeRelative);
 }
 
+function toValueScore(relativeScore: number, relativePrice: number | null): number | null {
+  if (typeof relativePrice !== "number" || !Number.isFinite(relativePrice) || relativePrice <= 0) {
+    return null;
+  }
+
+  return relativeScore * VALUE_SCORE_WEIGHT + (100 - relativePrice) * VALUE_PRICE_WEIGHT;
+}
+
+function compareRankedModelsByValue(
+  left: RankedModelWithValue,
+  right: RankedModelWithValue,
+): number {
+  const leftValue = left.valueScore;
+  const rightValue = right.valueScore;
+  const leftHasValue = leftValue !== null;
+  const rightHasValue = rightValue !== null;
+
+  if (leftValue !== null && rightValue !== null && leftValue !== rightValue) {
+    return rightValue - leftValue;
+  }
+
+  if (leftHasValue !== rightHasValue) {
+    return leftHasValue ? -1 : 1;
+  }
+
+  if (right.score !== left.score) {
+    return right.score - left.score;
+  }
+
+  const leftPrice = left.price;
+  const rightPrice = right.price;
+  const leftHasPrice = typeof leftPrice === "number" && Number.isFinite(leftPrice);
+  const rightHasPrice = typeof rightPrice === "number" && Number.isFinite(rightPrice);
+
+  if (leftHasPrice && rightHasPrice && leftPrice !== rightPrice) {
+    return leftPrice - rightPrice;
+  }
+
+  if (leftHasPrice !== rightHasPrice) {
+    return leftHasPrice ? -1 : 1;
+  }
+
+  return left.model.localeCompare(right.model);
+}
+
 export class ModelRankingService {
   private artificialAnalysisClient;
 
@@ -115,16 +166,31 @@ export class ModelRankingService {
     const topInputPrice = rankedModels[0].inputPrice;
     const topOutputPrice = rankedModels[0].outputPrice;
 
-    return rankedModels.map((entry, index) => ({
+    const rankedByValue = rankedModels
+      .map((entry) => {
+        const relativeScore = toRoundedRelative(entry.score, topScore);
+        const relativePrice = toRelativePrice(
+          entry.inputPrice,
+          entry.outputPrice,
+          topInputPrice,
+          topOutputPrice,
+        );
+
+        return {
+          position: 0,
+          model: entry.model,
+          score: relativeScore,
+          price: relativePrice,
+          valueScore: toValueScore(relativeScore, relativePrice),
+        } satisfies RankedModelWithValue;
+      })
+      .sort(compareRankedModelsByValue);
+
+    return rankedByValue.map(({ valueScore: _valueScore, ...entry }, index) => ({
       position: index + 1,
       model: entry.model,
-      relativeScore: toRoundedRelative(entry.score, topScore),
-      relativePrice: toRelativePrice(
-        entry.inputPrice,
-        entry.outputPrice,
-        topInputPrice,
-        topOutputPrice,
-      ),
+      score: entry.score,
+      price: entry.price,
     }));
   }
 }
