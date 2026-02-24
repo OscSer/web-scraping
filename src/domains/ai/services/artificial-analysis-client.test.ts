@@ -29,6 +29,7 @@ interface LoadOptions {
         model: string;
         agentic: number | null;
         coding: number | null;
+        blendedPrice: number | null;
         inputPrice: number | null;
         outputPrice: number | null;
       }>
@@ -38,6 +39,7 @@ interface LoadOptions {
       model: string;
       agentic: number | null;
       coding: number | null;
+      blendedPrice: number | null;
       inputPrice: number | null;
       outputPrice: number | null;
     }>
@@ -56,6 +58,7 @@ async function loadArtificialAnalysisClient(options: LoadOptions = {}) {
             model: string;
             agentic: number | null;
             coding: number | null;
+            blendedPrice: number | null;
             inputPrice: number | null;
             outputPrice: number | null;
           }>
@@ -102,6 +105,7 @@ describe("ArtificialAnalysisClient", () => {
         short_name: "Model A",
         agentic_index: 75,
         coding_index: 62,
+        price_1m_blended_3_to_1: 0.2625,
         price_1m_input_tokens: 0.15,
         price_1m_output_tokens: 0.6,
       },
@@ -120,6 +124,7 @@ describe("ArtificialAnalysisClient", () => {
         model: "Model A",
         agentic: 75,
         coding: 62,
+        blendedPrice: 0.2625,
         inputPrice: 0.15,
         outputPrice: 0.6,
       },
@@ -127,13 +132,14 @@ describe("ArtificialAnalysisClient", () => {
         model: "Model B",
         agentic: 68,
         coding: null,
+        blendedPrice: null,
         inputPrice: null,
         outputPrice: null,
       },
     ]);
 
     expect(getOrFetch).toHaveBeenCalledWith(
-      "ai:artificial-analysis:models:v2",
+      "ai:artificial-analysis:models:v4",
       expect.any(Function),
     );
   });
@@ -147,6 +153,7 @@ describe("ArtificialAnalysisClient", () => {
           name: "Model C",
           agentic_index: 77,
           coding_index: 63,
+          price_1m_blended_3_to_1: 1.5,
         },
       ],
       {
@@ -165,6 +172,7 @@ describe("ArtificialAnalysisClient", () => {
         model: "Model C",
         agentic: 77,
         coding: 63,
+        blendedPrice: 1.5,
         inputPrice: null,
         outputPrice: null,
       },

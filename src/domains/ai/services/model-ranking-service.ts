@@ -2,37 +2,40 @@ import { AiParseError } from "../types/errors.js";
 import { ArtificialAnalysisModel, RankedModel } from "../types/ranking.js";
 import { ArtificialAnalysisClient } from "./artificial-analysis-client.js";
 
-const CODING_WEIGHT = 0.5;
-const AGENTIC_WEIGHT = 0.5;
-const INPUT_PRICE_WEIGHT = 0.85;
-const OUTPUT_PRICE_WEIGHT = 0.15;
+const AGENTIC_WEIGHT = 0.6;
+const CODING_WEIGHT = 0.4;
 const VALUE_SCORE_WEIGHT = 0.8;
 const VALUE_PRICE_WEIGHT = 0.2;
 const RANKING_LIMIT = 25;
 
-function hasBothScores(
+function hasRequiredFields(
   model: ArtificialAnalysisModel,
-): model is ArtificialAnalysisModel & { agentic: number; coding: number } {
-  return model.agentic !== null && model.coding !== null;
+): model is ArtificialAnalysisModel & { coding: number; agentic: number; blendedPrice: number } {
+  return model.coding !== null && model.agentic !== null && model.blendedPrice !== null;
 }
 
 interface ScoredModel {
   model: string;
   score: number;
-  agentic: number;
   coding: number;
-  inputPrice: number | null;
-  outputPrice: number | null;
+  agentic: number;
+  blendedPrice: number;
 }
 
-interface RankedModelWithValue extends RankedModel {
+interface RankedModelWithValue {
+  position: number;
+  model: string;
+  score: number;
+  price: number | null;
   valueScore: number | null;
 }
 
 function compareScoredModels(left: ScoredModel, right: ScoredModel): number {
   if (right.score !== left.score) return right.score - left.score;
+  if (right.coding !== left.coding) return right.coding - left.coding;
   if (right.agentic !== left.agentic) return right.agentic - left.agentic;
-  return right.coding - left.coding;
+  if (left.blendedPrice !== right.blendedPrice) return left.blendedPrice - right.blendedPrice;
+  return left.model.localeCompare(right.model);
 }
 
 function toRelativePercentValue(value: number, topValue: number): number {
@@ -47,35 +50,16 @@ function toRoundedRelative(value: number, topValue: number): number {
   return Math.round(toRelativePercentValue(value, topValue));
 }
 
-function toRelativePrice(
-  inputPrice: number | null,
-  outputPrice: number | null,
-  topInputPrice: number | null,
-  topOutputPrice: number | null,
-): number | null {
-  if (
-    typeof inputPrice !== "number" ||
-    !Number.isFinite(inputPrice) ||
-    typeof outputPrice !== "number" ||
-    !Number.isFinite(outputPrice) ||
-    typeof topInputPrice !== "number" ||
-    !Number.isFinite(topInputPrice) ||
-    typeof topOutputPrice !== "number" ||
-    !Number.isFinite(topOutputPrice)
-  ) {
+function toRelativePrice(blendedPrice: number, topBlendedPrice: number): number | null {
+  if (!Number.isFinite(blendedPrice) || !Number.isFinite(topBlendedPrice)) {
     return null;
   }
 
-  if (topInputPrice === 0 || topOutputPrice === 0) {
+  if (topBlendedPrice === 0) {
     return null;
   }
 
-  const inputRelative = toRelativePercentValue(inputPrice, topInputPrice);
-  const outputRelative = toRelativePercentValue(outputPrice, topOutputPrice);
-  const compositeRelative =
-    inputRelative * INPUT_PRICE_WEIGHT + outputRelative * OUTPUT_PRICE_WEIGHT;
-
-  return Math.round(compositeRelative);
+  return Math.round(toRelativePercentValue(blendedPrice, topBlendedPrice));
 }
 
 function toValueScore(relativeScore: number, relativePrice: number | null): number | null {
@@ -84,6 +68,10 @@ function toValueScore(relativeScore: number, relativePrice: number | null): numb
   }
 
   return relativeScore * VALUE_SCORE_WEIGHT + (100 - relativePrice) * VALUE_PRICE_WEIGHT;
+}
+
+function toPercentageText(value: number): string {
+  return `${value}%`;
 }
 
 function compareRankedModelsByValue(
@@ -133,16 +121,15 @@ export class ModelRankingService {
   async getRanking(): Promise<RankedModel[]> {
     const models = await this.artificialAnalysisClient.getModels();
 
-    const scoredModels: ScoredModel[] = models.filter(hasBothScores).map((model) => {
-      const score = model.agentic * AGENTIC_WEIGHT + model.coding * CODING_WEIGHT;
+    const scoredModels: ScoredModel[] = models.filter(hasRequiredFields).map((model) => {
+      const score = model.coding * CODING_WEIGHT + model.agentic * AGENTIC_WEIGHT;
 
       return {
         model: model.model,
         score,
-        agentic: model.agentic,
         coding: model.coding,
-        inputPrice: model.inputPrice,
-        outputPrice: model.outputPrice,
+        agentic: model.agentic,
+        blendedPrice: model.blendedPrice,
       };
     });
 
@@ -159,22 +146,16 @@ export class ModelRankingService {
       .slice(0, RANKING_LIMIT);
 
     if (rankedModels.length === 0) {
-      throw new AiParseError("No models with both agentic and coding scores were found");
+      throw new AiParseError("No models with coding, agentic, and blended price were found");
     }
 
     const topScore = rankedModels[0].score;
-    const topInputPrice = rankedModels[0].inputPrice;
-    const topOutputPrice = rankedModels[0].outputPrice;
+    const topBlendedPrice = rankedModels[0].blendedPrice;
 
     const rankedByValue = rankedModels
       .map((entry) => {
         const relativeScore = toRoundedRelative(entry.score, topScore);
-        const relativePrice = toRelativePrice(
-          entry.inputPrice,
-          entry.outputPrice,
-          topInputPrice,
-          topOutputPrice,
-        );
+        const relativePrice = toRelativePrice(entry.blendedPrice, topBlendedPrice);
 
         return {
           position: 0,
@@ -189,8 +170,8 @@ export class ModelRankingService {
     return rankedByValue.map(({ valueScore: _valueScore, ...entry }, index) => ({
       position: index + 1,
       model: entry.model,
-      score: entry.score,
-      price: entry.price,
+      score: toPercentageText(entry.score),
+      price: entry.price === null ? null : toPercentageText(entry.price),
     }));
   }
 }

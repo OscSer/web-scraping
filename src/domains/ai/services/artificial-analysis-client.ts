@@ -6,7 +6,7 @@ import { ArtificialAnalysisModel } from "../types/ranking.js";
 
 const ARTIFICIAL_ANALYSIS_URL = "https://artificialanalysis.ai/";
 const ARTIFICIAL_ANALYSIS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:artificial-analysis:models:v2";
+const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:artificial-analysis:models:v4";
 const NEXT_FLIGHT_CHUNK_PATTERN =
   'self\\.__next_f\\.push\\(\\[\\s*\\d+\\s*,\\s*"((?:\\\\.|[^"\\\\])*)"';
 const MODELS_KEY_PATTERN = '"models"\\s*:\\s*\\[';
@@ -17,6 +17,7 @@ interface RawArtificialAnalysisModel {
   name?: string;
   agentic_index?: number;
   coding_index?: number;
+  price_1m_blended_3_to_1?: number;
   price_1m_input_tokens?: number;
   price_1m_output_tokens?: number;
 }
@@ -97,6 +98,9 @@ function normalizeModel(rawModel: RawArtificialAnalysisModel): ArtificialAnalysi
     model: name.trim(),
     agentic: isFiniteNumber(rawModel.agentic_index) ? rawModel.agentic_index : null,
     coding: isFiniteNumber(rawModel.coding_index) ? rawModel.coding_index : null,
+    blendedPrice: isFiniteNumber(rawModel.price_1m_blended_3_to_1)
+      ? rawModel.price_1m_blended_3_to_1
+      : null,
     inputPrice: isFiniteNumber(rawModel.price_1m_input_tokens)
       ? rawModel.price_1m_input_tokens
       : null,
@@ -143,23 +147,23 @@ function extractModelsFromChunk(decodedChunk: string): ArtificialAnalysisModel[]
   return modelSets;
 }
 
-function countModelsWithBothScores(models: ArtificialAnalysisModel[]): number {
-  return models.filter((model) => model.agentic !== null && model.coding !== null).length;
+function countModelsWithCodingAndBlendedPrice(models: ArtificialAnalysisModel[]): number {
+  return models.filter((model) => model.coding !== null && model.blendedPrice !== null).length;
 }
 
 function pickBestModelSet(modelSets: ArtificialAnalysisModel[][]): ArtificialAnalysisModel[] {
   let bestSet: ArtificialAnalysisModel[] = [];
-  let bestBothScoresCount = -1;
+  let bestCoverageCount = -1;
 
   for (const modelSet of modelSets) {
-    const currentBothScoresCount = countModelsWithBothScores(modelSet);
-    const hasBetterCoverage = currentBothScoresCount > bestBothScoresCount;
+    const currentCoverageCount = countModelsWithCodingAndBlendedPrice(modelSet);
+    const hasBetterCoverage = currentCoverageCount > bestCoverageCount;
     const hasSameCoverageButMoreModels =
-      currentBothScoresCount === bestBothScoresCount && modelSet.length > bestSet.length;
+      currentCoverageCount === bestCoverageCount && modelSet.length > bestSet.length;
 
     if (hasBetterCoverage || hasSameCoverageButMoreModels) {
       bestSet = modelSet;
-      bestBothScoresCount = currentBothScoresCount;
+      bestCoverageCount = currentCoverageCount;
     }
   }
 

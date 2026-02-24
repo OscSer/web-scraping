@@ -6,6 +6,7 @@ import { config } from "./shared/config/index.js";
 import { createApiKeyOnRequestHook } from "./shared/utils/api-key-auth.js";
 
 const fastify = Fastify({
+  forceCloseConnections: true,
   logger: {
     level: process.env.LOG_LEVEL ?? "info",
   },
