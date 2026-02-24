@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ModelRankingService } from "./model-ranking-service.js";
 
 describe("ModelRankingService", () => {
-  it("filters models without both scores and sorts by score", async () => {
+  it("filters models without both scores and ranks by value", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
@@ -44,7 +44,7 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 2,
-        score: "96%",
+        score: "78%",
         price: "100%",
       },
     ]);
@@ -79,7 +79,7 @@ describe("ModelRankingService", () => {
     });
   });
 
-  it("deduplicates by model and keeps highest score", async () => {
+  it("deduplicates by model and returns value-ranked output", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
@@ -113,16 +113,16 @@ describe("ModelRankingService", () => {
 
     await expect(service.getRanking()).resolves.toEqual([
       {
-        model: "Model A",
+        model: "Model B",
         position: 1,
-        score: "100%",
-        price: "100%",
+        score: "91%",
+        price: "17%",
       },
       {
-        model: "Model B",
+        model: "Model A",
         position: 2,
-        score: "74%",
-        price: "17%",
+        score: "100%",
+        price: "100%",
       },
     ]);
   });
@@ -173,13 +173,13 @@ describe("ModelRankingService", () => {
     expect(modelXA).toEqual({
       model: "Model X",
       position: 1,
-      score: "92%",
+      score: "99%",
       price: "24%",
     });
     expect(modelXB).toEqual({
       model: "Model X",
       position: 1,
-      score: "92%",
+      score: "99%",
       price: "24%",
     });
     expect(rankingA).toEqual(rankingB);
