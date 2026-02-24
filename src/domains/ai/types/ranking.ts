@@ -2,10 +2,13 @@ export interface ArtificialAnalysisModel {
   model: string;
   agentic: number | null;
   coding: number | null;
+  inputPrice: number | null;
+  outputPrice: number | null;
 }
 
 export interface RankedModel {
-  model: string;
   position: number;
-  relative: number;
+  model: string;
+  relativeScore: number;
+  relativePrice: number | null;
 }

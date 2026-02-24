@@ -7,7 +7,8 @@ interface ModelRankingServiceMock {
     Array<{
       model: string;
       position: number;
-      relative: number;
+      relativeScore: number;
+      relativePrice: number | null;
     }>
   >;
 }
@@ -34,12 +35,14 @@ describe("rankingRoutes", () => {
         {
           model: "Model B",
           position: 1,
-          relative: 100,
+          relativeScore: 100,
+          relativePrice: 100,
         },
         {
           model: "Model A",
           position: 2,
-          relative: 90.63,
+          relativeScore: 91,
+          relativePrice: 300,
         },
       ]),
     };
@@ -57,12 +60,14 @@ describe("rankingRoutes", () => {
       {
         model: "Model B",
         position: 1,
-        relative: 100,
+        relativeScore: 100,
+        relativePrice: 100,
       },
       {
         model: "Model A",
         position: 2,
-        relative: 90.63,
+        relativeScore: 91,
+        relativePrice: 300,
       },
     ]);
   });

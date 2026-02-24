@@ -24,8 +24,24 @@ function buildHtmlWithModels(models: unknown[], options: HtmlPayloadOptions = {}
 interface LoadOptions {
   getOrFetchImpl?: (
     key: string,
-    fetcher: () => Promise<Array<{ model: string; agentic: number | null; coding: number | null }>>,
-  ) => Promise<Array<{ model: string; agentic: number | null; coding: number | null }>>;
+    fetcher: () => Promise<
+      Array<{
+        model: string;
+        agentic: number | null;
+        coding: number | null;
+        inputPrice: number | null;
+        outputPrice: number | null;
+      }>
+    >,
+  ) => Promise<
+    Array<{
+      model: string;
+      agentic: number | null;
+      coding: number | null;
+      inputPrice: number | null;
+      outputPrice: number | null;
+    }>
+  >;
 }
 
 async function loadArtificialAnalysisClient(options: LoadOptions = {}) {
@@ -36,7 +52,13 @@ async function loadArtificialAnalysisClient(options: LoadOptions = {}) {
       (async (
         _key: string,
         fetcher: () => Promise<
-          Array<{ model: string; agentic: number | null; coding: number | null }>
+          Array<{
+            model: string;
+            agentic: number | null;
+            coding: number | null;
+            inputPrice: number | null;
+            outputPrice: number | null;
+          }>
         >,
       ) => {
         return fetcher();
@@ -80,6 +102,8 @@ describe("ArtificialAnalysisClient", () => {
         short_name: "Model A",
         agentic_index: 75,
         coding_index: 62,
+        price_1m_input_tokens: 0.15,
+        price_1m_output_tokens: 0.6,
       },
       {
         model_name: "Model B",
@@ -96,15 +120,22 @@ describe("ArtificialAnalysisClient", () => {
         model: "Model A",
         agentic: 75,
         coding: 62,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
       },
       {
         model: "Model B",
         agentic: 68,
         coding: null,
+        inputPrice: null,
+        outputPrice: null,
       },
     ]);
 
-    expect(getOrFetch).toHaveBeenCalledWith("ai:artificial-analysis:models", expect.any(Function));
+    expect(getOrFetch).toHaveBeenCalledWith(
+      "ai:artificial-analysis:models:v2",
+      expect.any(Function),
+    );
   });
 
   it("parses models with variable channel and spacing", async () => {
@@ -134,6 +165,8 @@ describe("ArtificialAnalysisClient", () => {
         model: "Model C",
         agentic: 77,
         coding: 63,
+        inputPrice: null,
+        outputPrice: null,
       },
     ]);
   });

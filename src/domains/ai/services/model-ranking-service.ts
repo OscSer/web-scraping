@@ -4,11 +4,9 @@ import { ArtificialAnalysisClient } from "./artificial-analysis-client.js";
 
 const AGENTIC_WEIGHT = 0.6;
 const CODING_WEIGHT = 0.4;
+const INPUT_PRICE_WEIGHT = 0.9;
+const OUTPUT_PRICE_WEIGHT = 0.1;
 const RANKING_LIMIT = 25;
-
-function roundScore(value: number): number {
-  return Number(value.toFixed(2));
-}
 
 function hasBothScores(
   model: ArtificialAnalysisModel,
@@ -21,6 +19,8 @@ interface ScoredModel {
   score: number;
   agentic: number;
   coding: number;
+  inputPrice: number | null;
+  outputPrice: number | null;
 }
 
 function compareScoredModels(left: ScoredModel, right: ScoredModel): number {
@@ -29,9 +29,47 @@ function compareScoredModels(left: ScoredModel, right: ScoredModel): number {
   return right.coding - left.coding;
 }
 
-function toRelativeScore(score: number, topScore: number): number {
-  if (topScore === 0) return score === 0 ? 100 : 0;
-  return roundScore((score / topScore) * 100);
+function toRelativePercentValue(value: number, topValue: number): number {
+  if (topValue === 0) {
+    return value === 0 ? 100 : 0;
+  }
+
+  return (value / topValue) * 100;
+}
+
+function toRoundedRelative(value: number, topValue: number): number {
+  return Math.round(toRelativePercentValue(value, topValue));
+}
+
+function toRelativePrice(
+  inputPrice: number | null,
+  outputPrice: number | null,
+  topInputPrice: number | null,
+  topOutputPrice: number | null,
+): number | null {
+  if (
+    typeof inputPrice !== "number" ||
+    !Number.isFinite(inputPrice) ||
+    typeof outputPrice !== "number" ||
+    !Number.isFinite(outputPrice) ||
+    typeof topInputPrice !== "number" ||
+    !Number.isFinite(topInputPrice) ||
+    typeof topOutputPrice !== "number" ||
+    !Number.isFinite(topOutputPrice)
+  ) {
+    return null;
+  }
+
+  if (topInputPrice === 0 || topOutputPrice === 0) {
+    return null;
+  }
+
+  const inputRelative = toRelativePercentValue(inputPrice, topInputPrice);
+  const outputRelative = toRelativePercentValue(outputPrice, topOutputPrice);
+  const compositeRelative =
+    inputRelative * INPUT_PRICE_WEIGHT + outputRelative * OUTPUT_PRICE_WEIGHT;
+
+  return Math.round(compositeRelative);
 }
 
 export class ModelRankingService {
@@ -52,6 +90,8 @@ export class ModelRankingService {
         score,
         agentic: model.agentic,
         coding: model.coding,
+        inputPrice: model.inputPrice,
+        outputPrice: model.outputPrice,
       };
     });
 
@@ -72,11 +112,19 @@ export class ModelRankingService {
     }
 
     const topScore = rankedModels[0].score;
+    const topInputPrice = rankedModels[0].inputPrice;
+    const topOutputPrice = rankedModels[0].outputPrice;
 
     return rankedModels.map((entry, index) => ({
-      model: entry.model,
       position: index + 1,
-      relative: toRelativeScore(entry.score, topScore),
+      model: entry.model,
+      relativeScore: toRoundedRelative(entry.score, topScore),
+      relativePrice: toRelativePrice(
+        entry.inputPrice,
+        entry.outputPrice,
+        topInputPrice,
+        topOutputPrice,
+      ),
     }));
   }
 }

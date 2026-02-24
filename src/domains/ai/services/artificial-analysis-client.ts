@@ -6,7 +6,7 @@ import { ArtificialAnalysisModel } from "../types/ranking.js";
 
 const ARTIFICIAL_ANALYSIS_URL = "https://artificialanalysis.ai/";
 const ARTIFICIAL_ANALYSIS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:artificial-analysis:models";
+const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:artificial-analysis:models:v2";
 const NEXT_FLIGHT_CHUNK_PATTERN =
   'self\\.__next_f\\.push\\(\\[\\s*\\d+\\s*,\\s*"((?:\\\\.|[^"\\\\])*)"';
 const MODELS_KEY_PATTERN = '"models"\\s*:\\s*\\[';
@@ -17,6 +17,8 @@ interface RawArtificialAnalysisModel {
   name?: string;
   agentic_index?: number;
   coding_index?: number;
+  price_1m_input_tokens?: number;
+  price_1m_output_tokens?: number;
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -95,6 +97,12 @@ function normalizeModel(rawModel: RawArtificialAnalysisModel): ArtificialAnalysi
     model: name.trim(),
     agentic: isFiniteNumber(rawModel.agentic_index) ? rawModel.agentic_index : null,
     coding: isFiniteNumber(rawModel.coding_index) ? rawModel.coding_index : null,
+    inputPrice: isFiniteNumber(rawModel.price_1m_input_tokens)
+      ? rawModel.price_1m_input_tokens
+      : null,
+    outputPrice: isFiniteNumber(rawModel.price_1m_output_tokens)
+      ? rawModel.price_1m_output_tokens
+      : null,
   };
 }
 
