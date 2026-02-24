@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createApiHelpersMocks,
   createPassthroughRateLimiterMock,
-} from "../../../../test-utils/service-test-helpers.js";
+} from "../../../shared/test-utils/service-test-helpers.js";
 
 interface LoadOptions {
   handleSteamErrorImpl?: (
