@@ -23,7 +23,6 @@ interface ScoredModel {
 }
 
 interface RankedModelWithValue {
-  position: number;
   model: string;
   score: number;
   price: number | null;
@@ -158,7 +157,6 @@ export class ModelRankingService {
         const relativePrice = toRelativePrice(entry.blendedPrice, topBlendedPrice);
 
         return {
-          position: 0,
           model: entry.model,
           score: relativeScore,
           price: relativePrice,

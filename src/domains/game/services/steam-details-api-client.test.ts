@@ -61,7 +61,7 @@ describe("SteamDetailsApiClient", () => {
       ),
     );
 
-    const client = new SteamDetailsApiClient({ child: vi.fn() } as never);
+    const client = new SteamDetailsApiClient();
 
     await expect(client.getGameNameByAppId("47780")).resolves.toBe("Dead Space 2");
 
@@ -90,7 +90,7 @@ describe("SteamDetailsApiClient", () => {
       }),
     );
 
-    const client = new SteamDetailsApiClient({ child: vi.fn() } as never);
+    const client = new SteamDetailsApiClient();
 
     await expect(client.getGameNameByAppId("47780")).rejects.toMatchObject({
       name: "SteamFetchError",
@@ -107,7 +107,7 @@ describe("SteamDetailsApiClient", () => {
       }),
     );
 
-    const client = new SteamDetailsApiClient({ child: vi.fn() } as never);
+    const client = new SteamDetailsApiClient();
 
     await expect(client.getGameNameByAppId("47780")).rejects.toMatchObject({
       name: "SteamParseError",
@@ -131,7 +131,7 @@ describe("SteamDetailsApiClient", () => {
       ),
     );
 
-    const client = new SteamDetailsApiClient({ child: vi.fn() } as never);
+    const client = new SteamDetailsApiClient();
 
     await expect(client.getGameNameByAppId("47780")).rejects.toMatchObject({
       name: "SteamParseError",
@@ -158,7 +158,7 @@ describe("SteamDetailsApiClient", () => {
       ),
     );
 
-    const client = new SteamDetailsApiClient({ child: vi.fn() } as never);
+    const client = new SteamDetailsApiClient();
 
     await expect(client.getGameNameByAppId("47780")).rejects.toMatchObject({
       name: "SteamParseError",

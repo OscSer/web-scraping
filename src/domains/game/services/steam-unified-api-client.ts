@@ -17,7 +17,7 @@ class SteamUnifiedApiClient {
 
   constructor(logger: FastifyBaseLogger) {
     this.steamGameDataCache = createCache<GameData>(STEAM_GAME_DATA_CACHE_TTL_MS, logger);
-    this.steamDetailsApiClient = new SteamDetailsApiClient(logger);
+    this.steamDetailsApiClient = new SteamDetailsApiClient();
     this.steamReviewsApiClient = new SteamReviewsApiClient(logger);
   }
 

@@ -1,4 +1,3 @@
-import type { FastifyBaseLogger } from "fastify";
 import { buildFetchHeaders, fetchWithTimeout } from "../../../shared/utils/api-helpers.js";
 import { type RateLimiter, createRateLimiter } from "../../../shared/utils/global-rate-limiter.js";
 import { SteamFetchError, SteamParseError } from "../types/errors.js";
@@ -15,9 +14,8 @@ interface SteamAppDetailsResponse {
 export class SteamDetailsApiClient {
   private rateLimiter: RateLimiter;
 
-  constructor(_logger: FastifyBaseLogger) {
+  constructor() {
     this.rateLimiter = createRateLimiter(10);
-    void _logger;
   }
 
   async getGameNameByAppId(appId: string): Promise<string> {
