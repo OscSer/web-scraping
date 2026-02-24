@@ -23,10 +23,17 @@ npm run format       # Auto-format code (prettier)
 Run `npm run dev` in background and check the routes via `curl`:
 
 ```bash
+# Game domain
 curl "http://localhost:3000/game/info?url=https%3A%2F%2Fstore.steampowered.com%2Fapp%2F47780%2FDead_Space__2%2F"
+
+# BVC domain
+curl "http://localhost:3000/bvc/ticker/ECOPETROL"
+
+# AI domain
+curl "http://localhost:3000/ai/ranking"
 ```
 
-## Logs
+## Check Logs
 
 Project ID: `web-scraping-484120`
 Service name: `web-scraping`
