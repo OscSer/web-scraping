@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  createApiHelpersMocks,
+  createPassthroughCacheGetOrFetchMock,
+} from "../../../../test-utils/service-test-helpers.js";
 
 interface HtmlPayloadOptions {
   channel?: number;
@@ -49,33 +53,24 @@ interface LoadOptions {
 async function loadArtificialAnalysisClient(options: LoadOptions = {}) {
   vi.resetModules();
 
-  const getOrFetch = vi.fn(
-    options.getOrFetchImpl ??
-      (async (
-        _key: string,
-        fetcher: () => Promise<
-          Array<{
-            model: string;
-            agentic: number | null;
-            coding: number | null;
-            blendedPrice: number | null;
-            inputPrice: number | null;
-            outputPrice: number | null;
-          }>
-        >,
-      ) => {
-        return fetcher();
-      }),
-  );
+  const getOrFetch = options.getOrFetchImpl
+    ? vi.fn(options.getOrFetchImpl)
+    : createPassthroughCacheGetOrFetchMock<
+        Array<{
+          model: string;
+          agentic: number | null;
+          coding: number | null;
+          blendedPrice: number | null;
+          inputPrice: number | null;
+          outputPrice: number | null;
+        }>
+      >();
 
   const createCache = vi.fn().mockReturnValue({
     getOrFetch,
   });
 
-  const fetchWithTimeout = vi.fn();
-  const buildFetchHeaders = vi
-    .fn()
-    .mockImplementation((headers?: Record<string, string>) => headers ?? {});
+  const { fetchWithTimeout, buildFetchHeaders } = createApiHelpersMocks();
 
   vi.doMock("../../../shared/utils/cache-factory.js", () => ({
     createCache,

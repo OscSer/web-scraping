@@ -1,17 +1,13 @@
-export class BvcFetchError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode: number,
-    public readonly statusText: string,
-  ) {
-    super(message);
-    this.name = "BvcFetchError";
+import { DomainFetchError, DomainParseError } from "../../../shared/types/errors.js";
+
+export class BvcFetchError extends DomainFetchError {
+  constructor(message: string, statusCode: number, statusText: string) {
+    super("BvcFetchError", message, statusCode, statusText);
   }
 }
 
-export class BvcParseError extends Error {
+export class BvcParseError extends DomainParseError {
   constructor(message: string) {
-    super(message);
-    this.name = "BvcParseError";
+    super("BvcParseError", message);
   }
 }

@@ -26,39 +26,44 @@ export const tickerRoutes: FastifyPluginAsync<TickerRoutesOptions> = async (fast
       return;
     }
 
+    let hadProviderError = false;
+    let result: TickerData | null = null;
+
     try {
-      let result: TickerData | null = await triiClient.getPriceByTicker(normalizedTicker);
-
-      if (result === null) {
-        fastify.log.info(
-          { ticker: normalizedTicker },
-          "Ticker not found in Trii, trying TradingView",
-        );
-        result = await tradingViewClient.getPriceByTicker(normalizedTicker);
-      }
-
-      if (result === null) {
-        await sendError(reply, 404, "TICKER_NOT_FOUND", `Ticker "${normalizedTicker}" not found`);
-        return;
-      }
-
-      return reply.code(200).send(result);
+      result = await triiClient.getPriceByTicker(normalizedTicker);
     } catch (error) {
-      fastify.log.error({ err: error }, "Error fetching ticker");
-
+      hadProviderError = true;
+      fastify.log.error({ err: error }, "Error fetching ticker from Trii");
       fastify.log.info({ ticker: normalizedTicker }, "Trii failed, trying TradingView as fallback");
-
-      try {
-        const result = await tradingViewClient.getPriceByTicker(normalizedTicker);
-
-        if (result !== null) {
-          return reply.code(200).send(result);
-        }
-      } catch (fallbackError) {
-        fastify.log.error({ err: fallbackError }, "TradingView fallback also failed");
-      }
-
-      await sendError(reply, 502, "FETCH_ERROR", "Error fetching ticker price");
     }
+
+    if (result !== null) {
+      return reply.code(200).send(result);
+    }
+
+    if (!hadProviderError) {
+      fastify.log.info(
+        { ticker: normalizedTicker },
+        "Ticker not found in Trii, trying TradingView",
+      );
+    }
+
+    try {
+      result = await tradingViewClient.getPriceByTicker(normalizedTicker);
+    } catch (error) {
+      hadProviderError = true;
+      fastify.log.error({ err: error }, "Error fetching ticker from TradingView");
+    }
+
+    if (result !== null) {
+      return reply.code(200).send(result);
+    }
+
+    if (!hadProviderError) {
+      await sendError(reply, 404, "TICKER_NOT_FOUND", `Ticker "${normalizedTicker}" not found`);
+      return;
+    }
+
+    await sendError(reply, 502, "FETCH_ERROR", "Error fetching ticker price");
   });
 };

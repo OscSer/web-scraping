@@ -1,17 +1,13 @@
-export class AiFetchError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode: number,
-    public readonly statusText: string,
-  ) {
-    super(message);
-    this.name = "AiFetchError";
+import { DomainFetchError, DomainParseError } from "../../../shared/types/errors.js";
+
+export class AiFetchError extends DomainFetchError {
+  constructor(message: string, statusCode: number, statusText: string) {
+    super("AiFetchError", message, statusCode, statusText);
   }
 }
 
-export class AiParseError extends Error {
+export class AiParseError extends DomainParseError {
   constructor(message: string) {
-    super(message);
-    this.name = "AiParseError";
+    super("AiParseError", message);
   }
 }

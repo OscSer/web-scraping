@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  createApiHelpersMocks,
+  createPassthroughCacheGetOrFetchMock,
+} from "../../../../test-utils/service-test-helpers.js";
 
 interface LoadOptions {
   getOrFetchImpl?: (key: string, fetcher: () => Promise<number>) => Promise<number>;
@@ -7,21 +11,15 @@ interface LoadOptions {
 async function loadTradingViewClient(options: LoadOptions = {}) {
   vi.resetModules();
 
-  const getOrFetch = vi.fn(
-    options.getOrFetchImpl ??
-      (async (_key: string, fetcher: () => Promise<number>) => {
-        return fetcher();
-      }),
-  );
+  const getOrFetch = options.getOrFetchImpl
+    ? vi.fn(options.getOrFetchImpl)
+    : createPassthroughCacheGetOrFetchMock<number>();
 
   const createCache = vi.fn().mockReturnValue({
     getOrFetch,
   });
 
-  const fetchWithTimeout = vi.fn();
-  const buildFetchHeaders = vi
-    .fn()
-    .mockImplementation((headers?: Record<string, string>) => headers ?? {});
+  const { fetchWithTimeout, buildFetchHeaders } = createApiHelpersMocks();
 
   vi.doMock("../../../shared/utils/cache-factory.js", () => ({
     createCache,

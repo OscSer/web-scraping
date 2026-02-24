@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  createApiHelpersMocks,
+  createPassthroughRateLimiterMock,
+} from "../../../../test-utils/service-test-helpers.js";
 
 interface LoadOptions {
   handleSteamErrorImpl?: (
@@ -13,14 +17,9 @@ interface LoadOptions {
 async function loadSteamReviewsApiClient(options: LoadOptions = {}) {
   vi.resetModules();
 
-  const fetchWithTimeout = vi.fn();
-  const buildFetchHeaders = vi
-    .fn()
-    .mockImplementation((headers?: Record<string, string>) => headers ?? {});
+  const { fetchWithTimeout, buildFetchHeaders } = createApiHelpersMocks();
 
-  const rateLimiter = vi.fn(async (fn: () => Promise<unknown>) => {
-    return fn();
-  });
+  const rateLimiter = createPassthroughRateLimiterMock();
 
   const createRateLimiter = vi.fn().mockReturnValue(rateLimiter);
 

@@ -1,16 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  createApiHelpersMocks,
+  createPassthroughRateLimiterMock,
+} from "../../../../test-utils/service-test-helpers.js";
 
 async function loadSteamDetailsApiClient() {
   vi.resetModules();
 
-  const fetchWithTimeout = vi.fn();
-  const buildFetchHeaders = vi
-    .fn()
-    .mockImplementation((headers?: Record<string, string>) => headers ?? {});
+  const { fetchWithTimeout, buildFetchHeaders } = createApiHelpersMocks();
 
-  const rateLimiter = vi.fn(async (fn: () => Promise<unknown>) => {
-    return fn();
-  });
+  const rateLimiter = createPassthroughRateLimiterMock();
 
   const createRateLimiter = vi.fn().mockReturnValue(rateLimiter);
 

@@ -145,6 +145,23 @@ describe("tickerRoutes", () => {
     });
   });
 
+  it("calls TradingView once when Trii misses and TradingView throws", async () => {
+    const triiClient = { getPriceByTicker: vi.fn().mockResolvedValue(null) };
+    const tradingViewClient = {
+      getPriceByTicker: vi.fn().mockRejectedValue(new Error("tradingview fail")),
+    };
+    const app = createServer(triiClient, tradingViewClient);
+    apps.push(app);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/ticker/ecopetrol",
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(tradingViewClient.getPriceByTicker).toHaveBeenCalledTimes(1);
+  });
+
   it("returns tradingview value when trii throws and fallback succeeds", async () => {
     const triiClient = {
       getPriceByTicker: vi.fn().mockRejectedValue(new Error("trii fail")),
