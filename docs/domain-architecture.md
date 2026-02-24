@@ -1,5 +1,18 @@
 # Domain Architecture
 
+## Document Status
+
+- This document mixes **target patterns** and **current implementation**.
+- If code and prose diverge, treat code as source of truth.
+- The notes below highlight known differences to reduce drift.
+
+### Current Implementation Notes
+
+- Domain plugins currently register services and routes consistently.
+- Domain-level `setErrorHandler` hooks are not universally used across domains.
+- Error handling is mostly implemented in route/service flows, not plugin-level handlers.
+- Error types follow a hybrid model: shared base classes in `shared/types` plus domain-specific wrappers in each domain.
+
 ## Pattern
 
 - Multi-domain plugin architecture using Fastify plugins
@@ -19,7 +32,7 @@ Each domain owns its complete vertical slice:
 
 - **Service Layer**: HTTP clients to external APIs
 - **Route Layer**: HTTP endpoints serving clients
-- **Type Layer**: Domain-specific types and errors
+- **Type Layer**: Domain-specific types and domain error wrappers over shared base errors
 - **Plugin Bootstrap**: Service instantiation and dependency wiring
 
 This structure enables:
@@ -151,11 +164,10 @@ App Bootstrap
 └─ Start server
 ```
 
-Each plugin brings its own:
+Each plugin typically brings its own:
 
 - Services
 - Routes
-- Error handlers
 - Logging scope
 
 Cross-domain communication flows through HTTP (loose coupling) or explicit shared utilities (cache, config).
@@ -232,23 +244,27 @@ Benefits:
 
 ### Domain-Specific Error Types
 
-Each domain defines custom error types capturing domain context:
+Domain errors are structured in two layers:
 
 ```
-Domain Errors
-├─ FetchError (HTTP status, response body)
-├─ ParseError (invalid response structure)
-└─ RateLimitError (concurrent request limit hit)
+Shared Base Errors
+├─ DomainFetchError (HTTP status metadata)
+└─ DomainParseError (invalid external payload)
+
+Domain Wrappers
+├─ AiFetchError / AiParseError
+├─ BvcFetchError / BvcParseError
+└─ SteamFetchError / SteamParseError
 ```
 
-Error handler functions catch these typed errors and convert to fallbacks:
+Typed errors then flow through service/route boundaries:
 
 ```
 Error Occurs
     │
-    ├─ If FetchError   → warn log, return fallback
-    ├─ If ParseError   → error log, return fallback
-    └─ If RateLimitError → warn log, return fallback
+    ├─ Service throws typed domain error for expected contract failures
+    ├─ Service may fallback for unexpected errors (domain-specific)
+    └─ Route maps failures to API response codes
 ```
 
 Benefits:
@@ -345,4 +361,4 @@ Spin up domain with real services
 - ❌ **Routes Instantiating Services**: Services created at domain level, injected to routes
 - ❌ **Mixed Responsibilities**: One service class doesn't talk to multiple external APIs
 - ❌ **Implicit Dependencies**: All dependencies explicit in constructor or interface
-- ❌ **Missing Error Types**: Each domain defines its own error types; no generic exceptions
+- ❌ **Raw Exceptions at Boundaries**: Domain failures should use typed domain errors (built on shared base types)

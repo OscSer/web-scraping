@@ -14,8 +14,8 @@ This project implements a web scraping service with a domain-driven architecture
 ```bash
 npm run dev          # Start dev server with hot reload
 npm run build        # Compile TypeScript
-npm run lint         # Check code style (eslint)
-npm run format       # Auto-format code (prettier)
+npm run check        # Run Biome checks and apply fixes
+npm run test         # Run test suite
 ```
 
 ## Check Functionality

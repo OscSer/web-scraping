@@ -1,12 +1,35 @@
 # Dependency Injection
 
+## Document Status
+
+- This document mixes **target patterns** and **current implementation**.
+- Dependencies are injected where they provide value; some services may not need every dependency type.
+
 ## Pattern
 
 - Constructor/factory function injection
 - Services created at domain level, passed to routes
-- Logger type injected to all services
+- Logger injected to services that need logging context
 - Rate limiter created internally by specific clients
 - No global singletons or hardcoded instances
+
+## Implemented Patterns (Current)
+
+### 1. Minimal Constructor Dependencies
+
+- Inject only dependencies a service actually uses.
+- If a client does not log directly, it should not receive a logger only for symmetry.
+- Example: `SteamDetailsApiClient` constructs with no logger dependency.
+
+### 2. Route Dependencies as Explicit Contracts
+
+- Route plugins declare exact service dependencies via typed options interfaces.
+- This keeps route wiring explicit and test mocking straightforward.
+
+### 3. Internalized Technical Policies
+
+- Cross-cutting runtime policies that are local to a client (for example rate-limiter concurrency) may be instantiated internally.
+- Shared cross-domain concerns (cache/config/error bases) remain in `shared/*`.
 
 ## Architecture Layers
 
@@ -40,8 +63,8 @@ Search for service constructors in domain service files:
 Logger injection pattern:
 
 - Domain creates a logger instance with domain-specific context prefix
-- Passed to all services in that domain
-- Services create child loggers with additional feature-specific context via the factory pattern
+- Passed to services in that domain that require logging
+- Services may create child loggers with additional feature-specific context when needed
 - No direct logger imports anywhere in the codebase
 
 Logger hierarchy:
@@ -75,3 +98,4 @@ Rate limiting pattern:
 - ❌ Hardcoded instances in multiple places
 - ❌ Service initialization side-effects
 - ❌ Shared resources between different external API clients
+- ❌ Injecting unused dependencies just to keep constructor signatures uniform
