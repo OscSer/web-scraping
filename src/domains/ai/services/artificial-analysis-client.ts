@@ -6,12 +6,15 @@ import { ArtificialAnalysisModel } from "../types/ranking.js";
 
 const ARTIFICIAL_ANALYSIS_URL = "https://artificialanalysis.ai/";
 const ARTIFICIAL_ANALYSIS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:artificial-analysis:models:v4";
+const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:models:v2";
 const NEXT_FLIGHT_CHUNK_PATTERN =
   'self\\.__next_f\\.push\\(\\[\\s*\\d+\\s*,\\s*"((?:\\\\.|[^"\\\\])*)"';
 const MODELS_KEY_PATTERN = '"models"\\s*:\\s*\\[';
 
 interface RawArtificialAnalysisModel {
+  slug?: string;
+  reasoning_model?: boolean;
+  isReasoning?: boolean;
   short_name?: string;
   model_name?: string;
   name?: string;
@@ -93,9 +96,13 @@ function extractNextFlightPayloadChunks(html: string): string[] {
 function normalizeModel(rawModel: RawArtificialAnalysisModel): ArtificialAnalysisModel | null {
   const name = rawModel.short_name ?? rawModel.model_name ?? rawModel.name;
   if (!name || name.trim().length === 0) return null;
+  const slug = typeof rawModel.slug === "string" ? rawModel.slug.trim() : "";
+  if (slug.length === 0) return null;
 
   return {
+    slug,
     model: name.trim(),
+    reasoningModel: rawModel.reasoning_model === true || rawModel.isReasoning === true,
     agentic: isFiniteNumber(rawModel.agentic_index) ? rawModel.agentic_index : null,
     coding: isFiniteNumber(rawModel.coding_index) ? rawModel.coding_index : null,
     blendedPrice: isFiniteNumber(rawModel.price_1m_blended_3_to_1)

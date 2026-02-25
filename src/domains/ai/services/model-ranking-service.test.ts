@@ -38,14 +38,14 @@ describe("ModelRankingService", () => {
       {
         model: "Model B",
         position: 1,
-        score: "100%",
-        price: "100%",
+        score: 64,
+        price1m: 0.38,
       },
       {
         model: "Model A",
         position: 2,
-        score: "78%",
-        price: "100%",
+        score: 47.81,
+        price1m: 0.38,
       },
     ]);
   });
@@ -115,14 +115,14 @@ describe("ModelRankingService", () => {
       {
         model: "Model B",
         position: 1,
-        score: "91%",
-        price: "17%",
+        score: 64,
+        price1m: 0.13,
       },
       {
         model: "Model A",
         position: 2,
-        score: "100%",
-        price: "100%",
+        score: 62.25,
+        price1m: 0.75,
       },
     ]);
   });
@@ -173,19 +173,19 @@ describe("ModelRankingService", () => {
     expect(modelXA).toEqual({
       model: "Model X",
       position: 1,
-      score: "99%",
-      price: "24%",
+      score: 74,
+      price1m: 0.13,
     });
     expect(modelXB).toEqual({
       model: "Model X",
       position: 1,
-      score: "99%",
-      price: "24%",
+      score: 74,
+      price1m: 0.13,
     });
     expect(rankingA).toEqual(rankingB);
   });
 
-  it("rounds relative score to integer", async () => {
+  it("returns base score in output", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
@@ -205,8 +205,8 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 1,
-        score: "100%",
-        price: "100%",
+        score: 64.26,
+        price1m: 0.26,
       },
     ]);
   });
@@ -231,18 +231,18 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
     const ranking = await service.getRanking();
 
-    expect(ranking).toHaveLength(25);
+    expect(ranking).toHaveLength(15);
     expect(ranking[0]).toMatchObject({
       model: "Model 1",
       position: 1,
-      score: "100%",
-      price: "100%",
+      score: 100,
+      price1m: 0.5,
     });
-    expect(ranking[24]).toMatchObject({
-      model: "Model 25",
-      position: 25,
-      score: "76%",
-      price: "100%",
+    expect(ranking[14]).toMatchObject({
+      model: "Model 15",
+      position: 15,
+      score: 83.89,
+      price1m: 0.5,
     });
   });
 
@@ -274,8 +274,8 @@ describe("ModelRankingService", () => {
       {
         model: "Model B",
         position: 1,
-        score: "100%",
-        price: "100%",
+        score: 0,
+        price1m: 0.26,
       },
     ]);
   });
@@ -308,8 +308,8 @@ describe("ModelRankingService", () => {
       {
         model: "Model B",
         position: 1,
-        score: "100%",
-        price: "100%",
+        score: -10,
+        price1m: 0.25,
       },
     ]);
   });
@@ -342,18 +342,18 @@ describe("ModelRankingService", () => {
     expect(ranking[0]).toMatchObject({
       model: "Model A",
       position: 1,
-      score: "100%",
-      price: "100%",
+      score: 86,
+      price1m: 0.13,
     });
     expect(ranking[1]).toMatchObject({
       model: "Model B",
       position: 2,
-      score: "100%",
-      price: "160%",
+      score: 82.4,
+      price1m: 0.2,
     });
   });
 
-  it("returns null relativePrice when top model has zero price baseline", async () => {
+  it("excludes free models (blendedPrice = 0) from the ranking", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
@@ -379,16 +379,10 @@ describe("ModelRankingService", () => {
 
     await expect(service.getRanking()).resolves.toEqual([
       {
-        model: "Model A",
-        position: 1,
-        score: "100%",
-        price: null,
-      },
-      {
         model: "Model B",
-        position: 2,
-        score: "90%",
-        price: null,
+        position: 1,
+        score: 90,
+        price1m: 0.63,
       },
     ]);
   });
