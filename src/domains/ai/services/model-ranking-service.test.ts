@@ -2,11 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { ModelRankingService } from "./model-ranking-service.js";
 
 describe("ModelRankingService", () => {
-  it("filters models without both scores and ranks by value", async () => {
+  it("filters models without required fields and ranks by value", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: 50,
           coding: 50,
           blendedPrice: 0.375,
@@ -14,7 +16,9 @@ describe("ModelRankingService", () => {
           outputPrice: 0.75,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 80,
           coding: 40,
           blendedPrice: 0.375,
@@ -22,7 +26,9 @@ describe("ModelRankingService", () => {
           outputPrice: 0.75,
         },
         {
+          slug: "model-c",
           model: "Model C",
+          reasoningModel: true,
           agentic: 90,
           coding: null,
           blendedPrice: null,
@@ -44,7 +50,7 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 2,
-        score: 47.81,
+        score: 46.72,
         price1m: 0.38,
       },
     ]);
@@ -54,7 +60,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: null,
           coding: 50,
           blendedPrice: null,
@@ -62,7 +70,9 @@ describe("ModelRankingService", () => {
           outputPrice: null,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 80,
           coding: null,
           blendedPrice: null,
@@ -79,11 +89,13 @@ describe("ModelRankingService", () => {
     });
   });
 
-  it("deduplicates by model and returns value-ranked output", async () => {
+  it("keeps rows with different slugs and returns value-ranked output", async () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a-fast",
           model: "Model A",
+          reasoningModel: true,
           agentic: 90,
           coding: 40,
           blendedPrice: 0.25,
@@ -91,7 +103,9 @@ describe("ModelRankingService", () => {
           outputPrice: 0.4,
         },
         {
+          slug: "model-a-smart",
           model: "Model A",
+          reasoningModel: true,
           agentic: 70,
           coding: 70,
           blendedPrice: 0.75,
@@ -99,7 +113,9 @@ describe("ModelRankingService", () => {
           outputPrice: 1.5,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 80,
           coding: 40,
           blendedPrice: 0.125,
@@ -113,15 +129,21 @@ describe("ModelRankingService", () => {
 
     await expect(service.getRanking()).resolves.toEqual([
       {
-        model: "Model B",
+        model: "Model A",
         position: 1,
+        score: 65.24,
+        price1m: 0.25,
+      },
+      {
+        model: "Model B",
+        position: 2,
         score: 64,
         price1m: 0.13,
       },
       {
         model: "Model A",
-        position: 2,
-        score: 62.25,
+        position: 3,
+        score: 58.38,
         price1m: 0.75,
       },
     ]);
@@ -130,7 +152,9 @@ describe("ModelRankingService", () => {
   it("uses tie-breakers during deduplication", async () => {
     const tiedRows = [
       {
+        slug: "model-x-cheap",
         model: "Model X",
+        reasoningModel: true,
         agentic: 89.5,
         coding: 50.75,
         blendedPrice: 0.125,
@@ -138,7 +162,9 @@ describe("ModelRankingService", () => {
         outputPrice: 0.2,
       },
       {
+        slug: "model-x-expensive",
         model: "Model X",
+        reasoningModel: true,
         agentic: 90,
         coding: 50,
         blendedPrice: 0.325,
@@ -146,7 +172,9 @@ describe("ModelRankingService", () => {
         outputPrice: 0.4,
       },
       {
+        slug: "model-y",
         model: "Model Y",
+        reasoningModel: true,
         agentic: 85,
         coding: 60,
         blendedPrice: 0.525,
@@ -189,7 +217,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: 80.123,
           coding: 40.456,
           blendedPrice: 0.2625,
@@ -211,11 +241,13 @@ describe("ModelRankingService", () => {
     ]);
   });
 
-  it("limits ranking response to top 25 models", async () => {
+  it("limits ranking response to top 20 models", async () => {
     const models = Array.from({ length: 30 }, (_, index) => {
       const rank = index + 1;
       return {
+        slug: `model-${rank}`,
         model: `Model ${rank}`,
+        reasoningModel: true,
         agentic: 100 - index,
         coding: 100 - index,
         blendedPrice: 0.5,
@@ -231,17 +263,17 @@ describe("ModelRankingService", () => {
     const service = new ModelRankingService(artificialAnalysisClient as never);
     const ranking = await service.getRanking();
 
-    expect(ranking).toHaveLength(15);
+    expect(ranking).toHaveLength(20);
     expect(ranking[0]).toMatchObject({
       model: "Model 1",
       position: 1,
       score: 100,
       price1m: 0.5,
     });
-    expect(ranking[14]).toMatchObject({
-      model: "Model 15",
-      position: 15,
-      score: 83.89,
+    expect(ranking[19]).toMatchObject({
+      model: "Model 20",
+      position: 20,
+      score: 77.2,
       price1m: 0.5,
     });
   });
@@ -250,7 +282,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: null,
           coding: 0,
           blendedPrice: null,
@@ -258,7 +292,9 @@ describe("ModelRankingService", () => {
           outputPrice: null,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 0,
           coding: 0,
           blendedPrice: 0.2625,
@@ -284,7 +320,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: null,
           coding: 0,
           blendedPrice: null,
@@ -292,7 +330,9 @@ describe("ModelRankingService", () => {
           outputPrice: null,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: -10,
           coding: -10,
           blendedPrice: 0.25,
@@ -318,7 +358,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: 86.004,
           coding: 86.004,
           blendedPrice: 0.125,
@@ -326,7 +368,9 @@ describe("ModelRankingService", () => {
           outputPrice: 0.2,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 86,
           coding: 86,
           blendedPrice: 0.2,
@@ -348,7 +392,7 @@ describe("ModelRankingService", () => {
     expect(ranking[1]).toMatchObject({
       model: "Model B",
       position: 2,
-      score: 82.4,
+      score: 80.6,
       price1m: 0.2,
     });
   });
@@ -357,7 +401,9 @@ describe("ModelRankingService", () => {
     const artificialAnalysisClient = {
       getModels: vi.fn().mockResolvedValue([
         {
+          slug: "model-a",
           model: "Model A",
+          reasoningModel: true,
           agentic: 100,
           coding: 100,
           blendedPrice: 0,
@@ -365,7 +411,9 @@ describe("ModelRankingService", () => {
           outputPrice: 0,
         },
         {
+          slug: "model-b",
           model: "Model B",
+          reasoningModel: true,
           agentic: 90,
           coding: 90,
           blendedPrice: 0.625,

@@ -2,11 +2,11 @@ import { AiParseError } from "../types/errors.js";
 import { ArtificialAnalysisModel, RankedModel } from "../types/ranking.js";
 import { ArtificialAnalysisClient } from "./artificial-analysis-client.js";
 
-const WEIGHT_INTELLIGENCE_AGENTIC = 0.7;
-const WEIGHT_INTELLIGENCE_CODING = 0.3;
+const WEIGHT_INTELLIGENCE_AGENTIC = 0.6;
+const WEIGHT_INTELLIGENCE_CODING = 0.4;
 
-const WEIGHT_FINAL_INTELLIGENCE = 0.8;
-const WEIGHT_FINAL_EFFICIENCY = 0.2;
+const WEIGHT_FINAL_INTELLIGENCE = 0.7;
+const WEIGHT_FINAL_EFFICIENCY = 0.3;
 
 const RANKING_LIMIT = 20;
 

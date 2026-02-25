@@ -97,6 +97,8 @@ describe("ArtificialAnalysisClient", () => {
 
     const html = buildHtmlWithModels([
       {
+        slug: "model-a",
+        reasoning_model: true,
         short_name: "Model A",
         agentic_index: 75,
         coding_index: 62,
@@ -105,6 +107,8 @@ describe("ArtificialAnalysisClient", () => {
         price_1m_output_tokens: 0.6,
       },
       {
+        slug: "model-b",
+        isReasoning: false,
         model_name: "Model B",
         agentic_index: 68,
       },
@@ -116,7 +120,9 @@ describe("ArtificialAnalysisClient", () => {
 
     await expect(client.getModels()).resolves.toEqual([
       {
+        slug: "model-a",
         model: "Model A",
+        reasoningModel: true,
         agentic: 75,
         coding: 62,
         blendedPrice: 0.2625,
@@ -124,7 +130,9 @@ describe("ArtificialAnalysisClient", () => {
         outputPrice: 0.6,
       },
       {
+        slug: "model-b",
         model: "Model B",
+        reasoningModel: false,
         agentic: 68,
         coding: null,
         blendedPrice: null,
@@ -133,10 +141,7 @@ describe("ArtificialAnalysisClient", () => {
       },
     ]);
 
-    expect(getOrFetch).toHaveBeenCalledWith(
-      "ai:artificial-analysis:models:v4",
-      expect.any(Function),
-    );
+    expect(getOrFetch).toHaveBeenCalledWith("ai:models", expect.any(Function));
   });
 
   it("parses models with variable channel and spacing", async () => {
@@ -145,6 +150,8 @@ describe("ArtificialAnalysisClient", () => {
     const html = buildHtmlWithModels(
       [
         {
+          slug: "model-c",
+          reasoning_model: true,
           name: "Model C",
           agentic_index: 77,
           coding_index: 63,
@@ -164,7 +171,9 @@ describe("ArtificialAnalysisClient", () => {
 
     await expect(client.getModels()).resolves.toEqual([
       {
+        slug: "model-c",
         model: "Model C",
+        reasoningModel: true,
         agentic: 77,
         coding: 63,
         blendedPrice: 1.5,
