@@ -1,4 +1,8 @@
 export const config = {
+  env: {
+    nodeEnv: process.env.NODE_ENV || "development",
+    logLevel: process.env.LOG_LEVEL || "info",
+  },
   server: {
     port: parseInt(process.env.PORT || "3000", 10),
     host: process.env.HOST || "0.0.0.0",
@@ -10,8 +14,8 @@ export const config = {
   cache: {
     isDisabled: process.env.CACHE_DISABLED === "true",
     upstash: {
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.UPSTASH_REDIS_URL,
+      token: process.env.UPSTASH_REDIS_TOKEN,
     },
   },
 } as const;

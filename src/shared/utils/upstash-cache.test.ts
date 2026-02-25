@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 interface LoadOptions {
   url?: string;
   token?: string;
+  nodeEnv?: string;
   getImpl?: () => Promise<unknown>;
   setexImpl?: () => Promise<unknown>;
 }
@@ -30,6 +31,9 @@ async function loadUpstashCacheModule(options: LoadOptions = {}) {
 
   vi.doMock("../config/index.js", () => ({
     config: {
+      env: {
+        nodeEnv: options.nodeEnv ?? "development",
+      },
       cache: {
         upstash: {
           url: options.url,
@@ -52,10 +56,10 @@ async function loadUpstashCacheModule(options: LoadOptions = {}) {
 describe("UpstashCache", () => {
   it("throws when credentials are missing", async () => {
     const { UpstashCache } = await loadUpstashCacheModule();
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
 
     expect(() => new UpstashCache<number>(1000, logger as never)).toThrow(
-      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set",
+      "UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set",
     );
   });
 
@@ -66,7 +70,7 @@ describe("UpstashCache", () => {
       getImpl: async () => 9,
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
 
     await expect(cache.get("game:1")).resolves.toBe(9);
@@ -82,7 +86,7 @@ describe("UpstashCache", () => {
       },
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
 
     await expect(cache.get("game:1")).resolves.toBeNull();
@@ -98,7 +102,7 @@ describe("UpstashCache", () => {
       token: "token",
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1500, logger as never);
 
     await cache.set("game:1", 88);
@@ -115,7 +119,7 @@ describe("UpstashCache", () => {
       },
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
 
     await expect(cache.set("game:1", 88)).resolves.toBeUndefined();
@@ -132,7 +136,7 @@ describe("UpstashCache", () => {
       getImpl: async () => 72,
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
     const fetcher = vi.fn().mockResolvedValue(99);
 
@@ -147,7 +151,7 @@ describe("UpstashCache", () => {
       getImpl: async () => null,
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
     const fetcher = vi.fn().mockResolvedValue(55);
 
@@ -163,7 +167,7 @@ describe("UpstashCache", () => {
       getImpl: async () => null,
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
 
     let resolveFetcher: ((value: number) => void) | null = null;
@@ -194,7 +198,7 @@ describe("UpstashCache", () => {
       getImpl: async () => null,
     });
 
-    const logger = { info: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), debug: vi.fn(), error: vi.fn() };
     const cache = new UpstashCache<number>(1000, logger as never);
 
     const fetcher = vi

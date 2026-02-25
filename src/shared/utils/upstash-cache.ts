@@ -8,7 +8,7 @@ let redisClient: Redis | null = null;
 function getRedisClient(): Redis {
   if (!redisClient) {
     if (!config.cache.upstash.url || !config.cache.upstash.token) {
-      throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set");
+      throw new Error("UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set");
     }
 
     redisClient = new Redis({
@@ -65,9 +65,7 @@ export class UpstashCache<T> implements Cache<T> {
   async getOrFetch(key: string, fetcher: () => Promise<T>): Promise<T> {
     const cached = await this.get(key);
     if (cached !== null) {
-      if (process.env.NODE_ENV !== "production") {
-        this.logger.info({ key }, "Cache hit");
-      }
+      this.logger.debug({ key }, "Cache hit");
       return cached;
     }
 
@@ -79,9 +77,7 @@ export class UpstashCache<T> implements Cache<T> {
     const promise = fetcher()
       .then(async (result) => {
         await this.set(key, result);
-        if (process.env.NODE_ENV !== "production") {
-          this.logger.info({ key }, "Cache miss - stored new value");
-        }
+        this.logger.debug({ key }, "Cache miss - stored new value");
         return result;
       })
       .catch((error) => {
