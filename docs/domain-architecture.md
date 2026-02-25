@@ -1,364 +1,53 @@
 # Domain Architecture
 
-## Document Status
-
-- This document mixes **target patterns** and **current implementation**.
-- If code and prose diverge, treat code as source of truth.
-- The notes below highlight known differences to reduce drift.
-
-### Current Implementation Notes
-
-- Domain plugins currently register services and routes consistently.
-- Domain-level `setErrorHandler` hooks are not universally used across domains.
-- Error handling is mostly implemented in route/service flows, not plugin-level handlers.
-- Error types follow a hybrid model: shared base classes in `shared/types` plus domain-specific wrappers in each domain.
-
-## Pattern
-
-- Multi-domain plugin architecture using Fastify plugins
-- Each domain is a self-contained unit with services, routes, and types
-- Single Responsibility: one service class per external API
-- Services instantiated at domain level, passed to routes via typed options interface
-- Domain-scoped loggers propagate context through layers
-- Domains can be independently deployed, tested, and scaled
-
-## Core Concept
-
-### Why Multi-Domain?
-
-The application models business domains as separate, loosely-coupled units. Each represents a distinct business capability.
-
-Each domain owns its complete vertical slice:
-
-- **Service Layer**: HTTP clients to external APIs
-- **Route Layer**: HTTP endpoints serving clients
-- **Type Layer**: Domain-specific types and domain error wrappers over shared base errors
-- **Plugin Bootstrap**: Service instantiation and dependency wiring
-
-This structure enables:
-
-- Parallel development (different teams work on different domains)
-- Independent testing (mock one domain's services without touching others)
-- Clear responsibility boundaries (no circular dependencies)
-- Future deployment flexibility (deploy domains separately)
-
-## Directory Structure
-
-```
-src/
-├── domains/
-│   ├── [domain-name]/
-│   │   ├── index.ts              # Plugin entry, service instantiation
-│   │   ├── services/
-│   │   │   ├── *-client.ts       # HTTP client to external API
-│   │   │   ├── *-service.ts      # Composition/orchestration
-│   │   │   └── ...
-│   │   ├── routes/
-│   │   │   ├── *.ts              # Fastify route handlers
-│   │   │   └── ...
-│   │   └── types/
-│   │       ├── errors.ts         # Domain-specific error types
-│   │       ├── responses.ts      # Response types
-│   │       └── ...
-│   └── [other-domains]/
-├── shared/
-│   ├── config/
-│   ├── types/
-│   └── utils/
-└── index.ts                      # App bootstrap, register plugins
-```
-
-### Key Principles
-
-**One API, One Service Class**: Each external API gets its own service class. This enables:
-
-- Clear responsibility (one class handles one external API)
-- Isolated testing (mock one client without affecting others)
-- Independent retry/caching strategy per API
-
-**Composition Over Inheritance**: Services that coordinate multiple APIs compose individual API clients rather than inheriting from them.
-
-**Domain Folder = Feature Folder**: All code related to one business capability lives together. Moving or removing a feature is straightforward.
-
-## Plugin Bootstrap Pattern
-
-### 1. Domain Index File Responsibilities
-
-Each domain has an index file that serves as the plugin entry point:
-
-```
-Domain Index File
-│
-├─ Instantiate logger (scoped with domain prefix)
-├─ Instantiate all services (pass logger)
-├─ Define routes function (accepting typed options)
-└─ Register plugin with Fastify
-```
-
-Sequence:
-
-1. Create domain-scoped logger by calling `child()` on the Fastify logger with a domain-specific message prefix
-2. Instantiate all services in that domain, passing the logger to each constructor
-3. Define a typed options interface listing what dependencies routes require
-4. Instantiate or define route handlers that accept typed options
-5. Register the domain as a Fastify plugin with all dependencies passed as options
-
-Benefits:
-
-- All service instantiation in one place (easy to see what's wired)
-- Logger context flows through entire domain
-- Type-safe dependency graph (interface enforces what routes need)
-- Easy to test (swap real services for mocks in tests)
-
-### 2. Service Constructor Injection
-
-Each service accepts dependencies via constructor:
-
-Services store dependencies as instance properties. This enables:
-
-- No global state (each instance has its own logger, cache, rate limiter)
-- Easy testing (pass mock logger, verify behavior)
-- Thread-safe (no shared mutable state)
-
-### 3. Typed Route Options Interface
-
-Each domain defines an interface describing what services routes depend on:
-
-```typescript
-// Pattern: explicit dependency contract
-interface RoutesOptions {
-  serviceA: SomeService;
-  serviceB: AnotherService;
-  logger: Logger;
-}
-
-// Routes are a function that receives typed options
-export async function setupRoutes(
-  fastify: FastifyInstance,
-  opts: RoutesOptions,
-) {
-  fastify.get("/endpoint", async (request, reply) => {
-    // Access injected services
-    const result = await opts.serviceA.doWork();
-  });
-}
-```
-
-Benefits:
-
-- Explicit contract: code clearly states what services are needed
-- Type safety: TypeScript enforces all dependencies are provided
-- Testability: mock only what routes actually use
-- Discoverability: new developers see immediately what services enable a route
-
-### 4. App Bootstrap
-
-The app bootstrap registers all domains as plugins:
-
-```
-App Bootstrap
-│
-├─ Register domain 1 plugin
-├─ Register domain 2 plugin
-├─ Register domain N plugin
-└─ Start server
-```
-
-Each plugin typically brings its own:
-
-- Services
-- Routes
-- Logging scope
-
-Cross-domain communication flows through HTTP (loose coupling) or explicit shared utilities (cache, config).
-
-## Service Organization
-
-### Single Responsibility Services
-
-Services follow Single Responsibility: one class per external API.
-
-Each service handles:
-
-- Own retry logic
-- Own caching strategy
-- Own error handling
-- Own HTTP client setup
-
-### Composition Service
-
-A higher-level service orchestrates multiple API clients:
-
-```
-Composition Service
-├─ API Client 1
-├─ API Client 2
-└─ API Client N
-```
-
-The composition service:
-
-- Calls multiple API clients in parallel using structured concurrency pattern (e.g., `Promise.allSettled`)
-- Combines responses into unified data structure
-- Implements fallback logic if some APIs fail
-
-This pattern enables:
-
-- **Reuse**: Individual API clients used by multiple consumers
-- **Testing**: Mock one API client without affecting others
-- **Observability**: Each API client logs independently
-- **Resilience**: Failure in one API doesn't prevent calling others
-
-## Logger Scoping
-
-### Hierarchy
-
-```
-Root Logger (from Fastify)
-    │
-    ├─ [Domain-Name] Domain Logger
-    │   │
-    │   ├─ [Cache] child logger
-    │   └─ [RateLimit] child logger
-    │
-    └─ [Other-Domain] Domain Logger
-        │
-        ├─ [Cache] child logger
-        └─ [Network] child logger
-```
-
-### Pattern
-
-- **Domain Level**: Root logger gets child with domain-specific prefix
-- **Feature Level**: Features (service, cache, rate limiter) create their own child with feature-specific prefix
-- **No Direct Imports**: No service directly imports or instantiates a logger; always receives via constructor
-
-Benefits:
-
-- Correlation: logs from same domain are grouped
-- Source identification: see immediately which domain/feature emitted log
-- Context propagation: pass logger to child services; they create their own child loggers
-- Testing: mock logger and verify messages
-
-## Type Safety at Domain Boundaries
-
-### Domain-Specific Error Types
-
-Domain errors are structured in two layers:
-
-```
-Shared Base Errors
-├─ DomainFetchError (HTTP status metadata)
-└─ DomainParseError (invalid external payload)
-
-Domain Wrappers
-├─ AiFetchError / AiParseError
-├─ BvcFetchError / BvcParseError
-└─ SteamFetchError / SteamParseError
-```
-
-Typed errors then flow through service/route boundaries:
-
-```
-Error Occurs
-    │
-    ├─ Service throws typed domain error for expected contract failures
-    ├─ Service may fallback for unexpected errors (domain-specific)
-    └─ Route maps failures to API response codes
-```
-
-Benefits:
-
-- Specific handling per error type
-- Never lose error context
-- Easy to test error paths (throw specific error, verify behavior)
-
-### Response Types
-
-Routes type their responses using TypeScript interfaces:
-
-```typescript
-// Explicit return type for each endpoint
-async function getDetails(): Promise<{ id: number; name: string }> {
-  // TypeScript enforces response shape
-}
-```
-
-Benefits:
-
-- API contract is code (single source of truth)
-- Type safety across consumers
-- IDE autocomplete for API consumers
-
-## Adding a New Domain
-
-To add a new domain to the application:
-
-1. **Create directory**: `src/domains/[domain-name]/`
-2. **Create subdirectories**: `services/`, `routes/`, `types/`
-3. **Implement API clients**: one class per external API
-4. **Implement routes**: export async function accepting typed options
-5. **Create domain index**: instantiate services, wire dependencies, register plugin
-6. **Update app bootstrap**: register new domain plugin in main app file
-
-Each step is isolated from existing domains. No touching existing domain code.
-
-## Testing Strategy
-
-### Service Level
-
-```
-Mock external API
-    │
-    └─ Service receives mock logger + mock response
-        │
-        └─ Verify service parses correctly / handles error
-```
-
-Search for how individual services handle errors and external calls.
-
-### Route Level
-
-```
-Mock all services in domain
-    │
-    └─ Route receives mock services + mock logger
-        │
-        └─ Verify route calls correct service + formats response
-```
-
-Search for how routes orchestrate service calls.
-
-### Domain Level
-
-```
-Spin up domain with real services
-    │
-    └─ Tests verify domain integration
-```
-
-### Cross-Domain
-
-- Domains don't call each other directly
-- No cross-domain tests needed
-- If integration testing required, test via HTTP layer (full app)
-
-## Benefits
-
-- **Parallelization**: Multiple teams develop different domains simultaneously
-- **Independent Testing**: Mock one domain without affecting others
-- **Incremental Deployment**: Deploy one domain without deploying all
-- **Clear Ownership**: Each domain has clear boundaries and responsibilities
-- **Scalability**: Add new domains without modifying existing code
-- **Debugging**: Logs are grouped by domain; easier to trace issues
-- **Onboarding**: New developers understand feature by reading one domain folder
-
-## Anti-patterns Avoided
-
-- ❌ **Global Service Registry**: No service manager singleton; services instantiated per domain
-- ❌ **Cross-Domain Dependencies**: Domains don't import from each other's services; only shared utils
-- ❌ **Shared Logger Without Scoping**: All loggers are scoped to domain/feature; no ambiguity about source
-- ❌ **Routes Instantiating Services**: Services created at domain level, injected to routes
-- ❌ **Mixed Responsibilities**: One service class doesn't talk to multiple external APIs
-- ❌ **Implicit Dependencies**: All dependencies explicit in constructor or interface
-- ❌ **Raw Exceptions at Boundaries**: Domain failures should use typed domain errors (built on shared base types)
+## Runtime Composition
+
+- The app bootstraps Fastify and registers domain plugins in `src/index.ts`.
+- Global API key auth is attached as an `onRequest` hook in `src/index.ts`.
+- Each domain plugin creates domain-scoped dependencies and registers routes:
+  - `src/domains/bvc/index.ts`
+  - `src/domains/game/index.ts`
+  - `src/domains/ai/index.ts`
+
+## Domain Boundaries
+
+- Domain code is grouped by feature:
+  - `src/domains/bvc/`
+  - `src/domains/game/`
+  - `src/domains/ai/`
+- Cross-domain concerns live in `src/shared/`.
+- Domains do not call each other directly; integration happens through HTTP routes and shared utilities.
+
+## Layer Responsibilities
+
+- Route layer: input validation and HTTP response mapping.
+  - `src/domains/bvc/routes/ticker.ts`
+  - `src/domains/game/routes/info.ts`
+  - `src/domains/ai/routes/ranking.ts`
+- Service/client layer: external API calls, parsing, and orchestration.
+  - `src/domains/bvc/services/trii-client.ts`
+  - `src/domains/bvc/services/tradingview-client.ts`
+  - `src/domains/game/services/steam-unified-api-client.ts`
+  - `src/domains/ai/services/artificial-analysis-client.ts`
+- Shared layer: config, helpers, cache abstractions, and base error types.
+  - `src/shared/config/index.ts`
+  - `src/shared/utils/cache-factory.ts`
+  - `src/shared/types/errors.ts`
+
+## Dependency Wiring
+
+- Services are instantiated in each domain plugin entry file.
+- Routes receive service instances via typed plugin options.
+- Logging context is created with child loggers at domain boundaries.
+- Main references:
+  - `src/domains/bvc/index.ts`
+  - `src/domains/game/index.ts`
+  - `src/domains/ai/index.ts`
+
+## Add a New Domain
+
+1. Create `src/domains/<domain-name>/` with `index.ts`, `routes/`, `services/`, and `types/`.
+2. Instantiate domain services in `src/domains/<domain-name>/index.ts`.
+3. Register routes and pass dependencies through typed options.
+4. Register the domain plugin in `src/index.ts`.
+5. Reuse shared concerns from `src/shared/` instead of duplicating utilities.

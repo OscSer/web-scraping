@@ -1,100 +1,39 @@
-# Cache
+# Cache Pattern
 
-## Pattern
+## Abstraction and Selection
 
-- Interface-based abstraction
-- Factory function selects implementation based on config
-- Multiple implementations: production and disabled modes
-- Request coalescing prevents stampeding herd problem
+- Cache contract:
+  - `src/shared/types/cache.ts`
+- Factory and implementation selection:
+  - `src/shared/utils/cache-factory.ts`
+- Runtime config source:
+  - `src/shared/config/index.ts`
 
-## Architecture
+## Implementations
 
-### Interface
+- Disabled mode: No-op cache in `src/shared/utils/cache-factory.ts`.
+- Enabled mode: Upstash-backed cache in `src/shared/utils/upstash-cache.ts`.
+- Upstash client is lazily initialized once per process in `src/shared/utils/upstash-cache.ts`.
 
-Located in shared types directory.
+## Reliability Behavior
 
-```
-get(key): Promise<T | null>
-set(key, data): Promise<void>
-getOrFetch(key, fetcher): Promise<T>
-```
+- `get` and `set` failures are logged and do not throw to callers.
+- `getOrFetch` includes in-flight request coalescing per key via a pending-request map.
+- Cache keys are namespaced with a `ws:` prefix before Redis operations.
+- Reference: `src/shared/utils/upstash-cache.ts`.
 
-Small, focused interface with single responsibility.
+## Where Cache Is Used
 
-### Factory
+- BVC Trii stock-list caching:
+  - `src/domains/bvc/services/trii-client.ts`
+- BVC TradingView ticker caching:
+  - `src/domains/bvc/services/tradingview-client.ts`
+- Steam unified game-data caching:
+  - `src/domains/game/services/steam-unified-api-client.ts`
+- AI models caching:
+  - `src/domains/ai/services/artificial-analysis-client.ts`
 
-Search for the factory function in shared utils.
+## Practical Rules
 
-- Returns no-op implementation if caching is disabled
-- Returns production cache implementation if enabled
-- Creates child logger with cache-specific prefix for visibility
-
-### No-Op Implementation (Null Object Pattern)
-
-- Implements cache interface
-- `get()` always returns null
-- `set()` no-operation
-- `getOrFetch()` skips cache, calls fetcher directly
-- Eliminates null checks from consumers
-
-### Production Cache Implementation
-
-Located in shared utils.
-
-- Singleton Redis client instantiated once
-- Key prefixing for namespace isolation
-- Request coalescing: tracks in-flight requests in a map to prevent duplicate fetches
-- Graceful degradation: errors logged but not thrown on get/set operations
-- Cleanup of pending requests via finally block
-
-## Request Coalescing
-
-Problem: Multiple requests for same key during cache miss cause duplicate external calls.
-
-Solution: Track in-flight requests in a map:
-
-- Cache miss detected
-- Check if key already in pending map
-- If yes, return existing promise (await same fetch)
-- If no, start fetch, store promise, clean up on completion
-
-Search for the pending requests map tracking logic in production cache implementation.
-
-## Usage Pattern
-
-Services receive cache via constructor injection:
-
-```typescript
-class ApiClient {
-  private cache;
-
-  constructor(logger) {
-    this.cache = cacheFacory<DataType>(TTL_MS, logger);
-  }
-
-  async getData(key: string): Promise<DataType> {
-    return this.cache.getOrFetch(key, () => fetchExternal());
-  }
-}
-```
-
-## Consumer Examples
-
-Search for cache instantiation pattern in service implementations across domains. Look for the pattern where services initialize cache with TTL and logger in their constructors.
-
-## Benefits
-
-- **Interface segregation**: Easy to mock in tests
-- **Config-driven**: Toggle caching for local dev without code changes
-- **Singleton pattern**: Redis client reused, not recreated
-- **Stampede protection**: Request coalescing prevents N+1 external calls
-- **Fault-tolerant**: Cache errors don't crash the service
-- **Transparent**: Caller doesn't know no-op vs production implementation
-
-## Anti-patterns Avoided
-
-- ❌ Direct Redis imports in services
-- ❌ Cache logic scattered across codebase
-- ❌ Stampeding herd on cache misses (duplicate fetches)
-- ❌ Null checks everywhere (Null Object pattern eliminates these)
-- ❌ Cache errors propagating to caller
+- Use `createCache` in services/clients instead of direct Redis imports.
+- Keep TTL and cache-key design local to each service/client.
