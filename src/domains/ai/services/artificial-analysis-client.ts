@@ -6,7 +6,7 @@ import { ArtificialAnalysisModel } from "../types/ranking.js";
 
 const ARTIFICIAL_ANALYSIS_URL = "https://artificialanalysis.ai/";
 const ARTIFICIAL_ANALYSIS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:models:v2";
+const ARTIFICIAL_ANALYSIS_CACHE_KEY = "ai:models";
 const NEXT_FLIGHT_CHUNK_PATTERN =
   'self\\.__next_f\\.push\\(\\[\\s*\\d+\\s*,\\s*"((?:\\\\.|[^"\\\\])*)"';
 const MODELS_KEY_PATTERN = '"models"\\s*:\\s*\\[';
