@@ -3,7 +3,11 @@ dist/
 *.log
 .env
 .env.local
+.env.*
+!.env.example
 .DS_Store
+.vscode/
+.idea/
 playwright/.cache/
 *.tsbuildinfo
 coverage/
