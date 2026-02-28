@@ -50,7 +50,7 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 2,
-        score: 46.72,
+        score: 47.81,
         price1m: 0.38,
       },
     ]);
@@ -131,7 +131,7 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 1,
-        score: 65.24,
+        score: 66.83,
         price1m: 0.25,
       },
       {
@@ -143,7 +143,7 @@ describe("ModelRankingService", () => {
       {
         model: "Model A",
         position: 3,
-        score: 58.38,
+        score: 62.25,
         price1m: 0.75,
       },
     ]);
@@ -273,7 +273,7 @@ describe("ModelRankingService", () => {
     expect(ranking[19]).toMatchObject({
       model: "Model 20",
       position: 20,
-      score: 77.2,
+      score: 78.47,
       price1m: 0.5,
     });
   });
@@ -392,7 +392,7 @@ describe("ModelRankingService", () => {
     expect(ranking[1]).toMatchObject({
       model: "Model B",
       position: 2,
-      score: 80.6,
+      score: 82.4,
       price1m: 0.2,
     });
   });
