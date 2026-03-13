@@ -13,7 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@upstash/redis": "^1.36.1",
-    "fastify": "^4.28.1",
+    "fastify": "^5.7.3",
     "p-limit": "^7.2.0"
   },
   "devDependencies": {
