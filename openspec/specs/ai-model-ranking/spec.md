@@ -1,5 +1,8 @@
-## ADDED Requirements
+# ai-model-ranking Specification
 
+## Purpose
+TBD - created by archiving change fix-ai-ranking-scraping. Update Purpose after archive.
+## Requirements
 ### Requirement: Parse models from multiple flight chunks
 The system SHALL extract model data from multiple Next.js flight payload chunks and merge them using `slug` as the join key.
 
@@ -25,3 +28,4 @@ The system SHALL support both old and new field names from artificialanalysis.ai
 #### Scenario: New reasoning field
 - **WHEN** the source uses `isReasoning` instead of `reasoning_model`
 - **THEN** the system SHALL recognize it as equivalent
+
