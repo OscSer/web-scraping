@@ -10,8 +10,7 @@ context: |
 rules:
   proposal:
     - Identify affected domain(s) and rate limiting strategy
-  design:
-    - Use createCache(), fetchWithTimeout(), domain error classes
+    - Take into account the project documentation `docs/`
   tasks:
     - Add tests for each scenario
     - After implementing changes, run `npm run check` to validate
